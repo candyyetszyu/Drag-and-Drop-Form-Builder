@@ -190,6 +190,9 @@ npm start
 
 Frontend will be available at: http://localhost:3000
 
+## Demo Video
+[Link] https://drive.google.com/file/d/1E-433FvlzgBVwImB3RjZDPAKB1hzCDJ0/view?usp=sharing
+
 ## Database Setup
 
 ### Initializing the MySQL Database
