@@ -1,4 +1,4 @@
-# Marketing Campaign Form Builder
+# Marketing Campaign Drag-and-Drop Form Builder
 
 A full-stack application for creating, managing and analyzing marketing campaigns with dynamic form creation capabilities.
 
