@@ -1,4 +1,4 @@
-import { api } from '../api/apiConfig';
+import { apiUtils } from '../api/apiConfig';
 
 const TOKEN_KEY = 'token';
 
@@ -10,20 +10,20 @@ const tokenService = {
 
 export const authService = {
   login: async (credentials) => {
-    const { data } = await api.post('/auth/login', credentials);
+    const data = await apiUtils.post('/auth/login', credentials);
     tokenService.set(data.token);
     return data;
   },
   register: async (userData) => {
-    const { data } = await api.post('/auth/register', userData);
+    const data = await apiUtils.post('/auth/register', userData);
     tokenService.set(data.token);
     return data;
   },
   logout: () => tokenService.remove(),
   getCurrentUser: async () => {
     if (!tokenService.exists()) return null;
-    const { data } = await api.get('/auth/me');
+    const data = await apiUtils.get('/auth/me');
     return data;
   },
   isAuthenticated: () => tokenService.exists()
-}; 
+};

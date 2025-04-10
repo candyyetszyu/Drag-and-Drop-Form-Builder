@@ -1,6 +1,6 @@
-# Drag and Drop Form Builder
+# Marketing Campaign Form Builder
 
-A flexible marketing campaign form builder with drag-and-drop interface.
+A full-stack application for creating, managing and analyzing marketing campaigns with dynamic form creation capabilities.
 
 ## Features
 
@@ -15,9 +15,6 @@ A flexible marketing campaign form builder with drag-and-drop interface.
 - **Conditional Logic** - Create dynamic forms with conditional field display
 - **Form Validation** - Set validation rules and test them before saving
 - **File Upload Support** - Allow users to upload files within forms
-- **Multi-column Layouts** - Arrange fields in multiple columns
-- **Form Templates** - Use pre-designed templates for faster form creation
-- **Form Submissions Tracking** - Monitor and analyze form responses
 
 ## Domain Model
 
@@ -65,11 +62,93 @@ This domain model illustrates the relationships between the main entities in the
 
 ## Project Structure
 
-- `/frontend` - React application for the form builder interface
-- `/backend` - Node.js API server
-- `/sql` - Database schema definitions
-- `/scripts` - Utility scripts for project management
-- `/docs` - Project documentation
+```
+/Marketing Campaign/
+├── backend/                      # Express.js backend
+│   ├── src/                      # Source code
+│   │   ├── server.js             # Server entry point
+│   │   ├── controllers/          # API controllers
+│   │   │   ├── formController.js # Form management controller
+│   │   │   ├── submissionController.js # Form submission controller  
+│   │   │   └── adminController.js # Admin dashboard controller
+│   │   ├── models/               # Data models
+│   │   │   ├── Form.js           # Form model
+│   │   │   ├── Submission.js     # Submission model
+│   │   │   └── FileUpload.js     # File upload model
+│   │   ├── middleware/           # Express middleware
+│   │   │   ├── auth.js           # Authentication middleware
+│   │   │   └── upload.js         # File upload middleware
+│   │   ├── routes/               # API routes
+│   │   │   ├── formRoutes.js     # Form management routes
+│   │   │   └── adminRoutes.js    # Admin routes
+│   │   └── storage/              # Storage adapters
+│   │       ├── fileStorage.js    # File-based storage implementation
+│   │       └── dbStorage.js      # Database storage implementation
+│   └── public/                   # Static assets
+│       ├── admin/                # Admin dashboard files
+│       │   └── dashboard.html    # Admin interface
+│       └── styles/               # CSS stylesheets
+│           └── admin.css         # Admin dashboard styles
+├── frontend/                     # React.js frontend
+│   ├── src/                      # Source code
+│   │   ├── components/           # UI components
+│   │   │   ├── ui/               # UI components
+│   │   │   │   ├── Button.js     # Button component
+│   │   │   │   └── Card.js       # Card component
+│   │   │   ├── builder/          # Form builder components
+│   │   │   │   ├── FormBuilder.js # Main form builder
+│   │   │   │   ├── FieldPalette.js # Field type selector
+│   │   │   │   ├── FormCanvas.js # Form building area
+│   │   │   │   ├── FieldConfigPanel.js # Field configuration
+│   │   │   │   ├── FormBuilderPage.js # Builder page component
+│   │   │   │   └── ThemeSelector.js # Theme selection component
+│   │   │   ├── fields/           # Field type components
+│   │   │   │   ├── FieldRenderer.js # Field rendering logic
+│   │   │   │   ├── TextInputField.js # Text input component
+│   │   │   │   ├── DropdownField.js # Dropdown component
+│   │   │   │   ├── TableField.js # Table input component
+│   │   │   │   └── FileUploadField.js # File upload component
+│   │   │   ├── tables/           # Table components
+│   │   │   │   └── TableInputField.js # Table input component
+│   │   │   └── preview/          # Form preview components
+│   │   │       └── FormPreview.js # Form preview component
+│   │   ├── context/              # React context providers
+│   │   │   ├── FormBuilderContext.js # Form builder state
+│   │   │   ├── FormContext.js    # Form data context
+│   │   │   ├── ThemeContext.js   # Theme context
+│   │   │   └── CampaignContext.js # Campaign context
+│   │   ├── hooks/                # Custom React hooks
+│   │   │   ├── useApi.js         # API request hook
+│   │   │   ├── useDebounce.js    # Value debouncing hook
+│   │   │   ├── useForm.js        # Form state management hook
+│   │   │   └── useFormSubmission.js # Form submission hook
+│   │   ├── api/                  # API service layer
+│   │   │   ├── apiConfig.js      # API configuration
+│   │   │   ├── formService.js    # Forms API client
+│   │   │   └── campaignService.js # Campaign API client
+│   │   ├── pages/                # Page components
+│   │   │   ├── HomePage.js       # Home page
+│   │   │   ├── DashboardPage.js  # Dashboard page
+│   │   │   └── CampaignFormPage.js # Campaign form page
+│   │   ├── utils/                # Utility functions
+│   │   │   ├── validation.js     # Validation utilities
+│   │   │   └── formValidation.js # Form validation utilities
+│   │   ├── router.js             # Application routing
+│   │   └── index.js              # Application entry point
+│   └── public/                   # Static assets
+├── sql/                          # Database scripts
+│   ├── initialize.sql            # Database schema
+│   ├── init-db.js                # DB initialization script
+│   └── modules/                  # SQL modules
+│       ├── ID01_Forms.sql        # Forms table definition
+│       ├── ID02_Fields.sql       # Fields table definition
+│       └── ID08_File_Uploads.sql # File uploads table definition
+├── scripts/                      # Utility scripts
+│   └── test-db-connection.js     # Database connection tester
+├── .env                          # Environment variables
+├── package.json                  # Project dependencies
+└── README.md                     # Project documentation
+```
 
 ## Running the Application
 
@@ -513,15 +592,78 @@ const themes = {
   }
   ```
 
+## API Endpoints Guide
+
+Below are instructions for testing the API endpoints using terminal commands:
+
+### Form Submission Endpoints
+
+```bash
+# Submit a form response
+# Replace 1 with your form ID
+curl -X POST http://localhost:3001/api/forms/1/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "rating": "5",
+    "feedback": "Great service!"
+  }'
+
+# Get all submissions for a form
+# Replace 1 with your form ID
+curl -X GET http://localhost:3001/api/forms/1/submissions
+```
+
+### Admin Endpoints
+
+```bash
+# Get all forms (admin view)
+curl -X GET http://localhost:3001/api/admin/forms
+
+# Get all submissions (admin view)
+curl -X GET http://localhost:3001/api/admin/submissions
+
+# Get specific form (admin view)
+# Replace 1 with your form ID
+curl -X GET http://localhost:3001/api/admin/forms/1
+
+# Get specific submission (admin view)
+# Replace 1 with your submission ID
+curl -X GET http://localhost:3001/api/admin/submissions/1
+
+# Delete a form (admin)
+# Replace 1 with your form ID
+curl -X DELETE http://localhost:3001/api/admin/forms/1
+
+# Delete a submission (admin)
+# Replace 1 with your submission ID
+curl -X DELETE http://localhost:3001/api/admin/submissions/1
+```
+
+### File Upload Endpoints
+
+```bash
+# Upload a file
+# Replace 1 with your form ID
+curl -X POST http://localhost:3001/api/upload \
+  -F "file=@/path/to/your/file.pdf" \
+  -F "formId=1"
+
+# Get files for a form
+# Replace 1 with your form ID
+curl -X GET http://localhost:3001/api/files/1
+```
+
 ## Contributing
 
-We welcome contributions to improve the Drag and Drop Form Builder! Here's how you can contribute:
+We welcome contributions to improve the Marketing Campaign Form Builder! Here's how you can contribute:
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** to your local machine
    ```bash
-   git clone https://github.com/yourusername/drag-and-drop-form-builder.git
-   cd drag-and-drop-form-builder
+   git clone https://github.com/yourusername/marketing-campaign.git
+   cd marketing-campaign
    ```
 3. **Create a new branch** for your feature or bugfix
    ```bash

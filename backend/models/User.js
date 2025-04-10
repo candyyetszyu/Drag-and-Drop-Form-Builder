@@ -39,4 +39,6 @@ class User extends BaseModel {
   }
 }
 
+// Keep this file if it's being used, otherwise remove it in favor of UserModel.js
+
 module.exports = User;

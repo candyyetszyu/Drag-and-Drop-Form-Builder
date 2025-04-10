@@ -1,11 +1,11 @@
-import { api } from './apiConfig';
+import { apiUtils } from './apiConfig';
 
 export const campaignService = {
-  getAll: () => api.get('/campaigns').then(({ data }) => data),
-  getById: id => api.get(`/campaigns/${id}`).then(({ data }) => data),
-  create: campaign => api.post('/campaigns', campaign).then(({ data }) => data),
-  update: (id, campaign) => api.put(`/campaigns/${id}`, campaign).then(({ data }) => data),
-  delete: id => api.delete(`/campaigns/${id}`).then(({ data }) => data),
-  getAnalytics: id => api.get(`/campaigns/${id}/analytics`).then(({ data }) => data),
-  getSubmissions: id => api.get(`/campaigns/${id}/submissions`).then(({ data }) => data)
-}; 
+  getAll: () => apiUtils.get('/campaigns'),
+  getById: id => apiUtils.get(`/campaigns/${id}`),
+  create: campaign => apiUtils.post('/campaigns', campaign),
+  update: (id, campaign) => apiUtils.put(`/campaigns/${id}`, campaign),
+  delete: id => apiUtils.delete(`/campaigns/${id}`),
+  getAnalytics: id => apiUtils.get(`/campaigns/${id}/analytics`),
+  getSubmissions: id => apiUtils.get(`/campaigns/${id}/submissions`)
+};

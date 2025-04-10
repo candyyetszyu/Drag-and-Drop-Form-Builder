@@ -19,6 +19,36 @@
             <h2>Contact Us</h2>
             <p>Reach out to us for more information.</p>
         </section>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="fields-sidebar">
+                        <h4>Available Fields</h4>
+                        <div class="field-item" data-field-id="field-1" data-field-type="text">
+                            <div class="field-label">Text Field</div>
+                        </div>
+                        <div class="field-item" data-field-id="field-2" data-field-type="email">
+                            <div class="field-label">Email Field</div>
+                        </div>
+                        <div class="field-item" data-field-id="field-3" data-field-type="number">
+                            <div class="field-label">Number Field</div>
+                        </div>
+                        <div class="field-item" data-field-id="field-4" data-field-type="date">
+                            <div class="field-label">Date Field</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <h4>Campaign Form Builder</h4>
+                    <div class="drop-zone" id="form-section-1">
+                        <p class="empty-message">Drag and drop fields here</p>
+                    </div>
+                    <div class="drop-zone" id="form-section-2">
+                        <p class="empty-message">Drag and drop fields here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     <footer>
         <p>&copy; 2023 Marketing Campaign. All rights reserved.</p>
@@ -42,6 +72,50 @@
                     document.getElementById('status-message').innerHTML = 'Server Offline';
                     document.getElementById('status-message').classList.remove('connected');
                 });
+        }
+
+        function loadLayout(layout) {
+            // Clear existing fields
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                const emptyMessage = zone.querySelector('.empty-message');
+                if (emptyMessage) {
+                    // Keep the empty message element
+                    zone.innerHTML = '';
+                    zone.appendChild(emptyMessage);
+                } else {
+                    zone.innerHTML = '';
+                }
+            });
+            
+            // Populate zones with saved fields
+            layout.forEach(zoneData => {
+                const zone = document.getElementById(zoneData.zoneId);
+                if (zone) {
+                    // Remove empty message
+                    const emptyMessage = zone.querySelector('.empty-message');
+                    if (emptyMessage) {
+                        emptyMessage.remove();
+                    }
+                    
+                    // Add fields
+                    zoneData.fields.forEach(fieldData => {
+                        const fieldElement = document.createElement('div');
+                        fieldElement.className = 'field-item';
+                        fieldElement.dataset.fieldId = fieldData.id;
+                        fieldElement.dataset.fieldType = fieldData.type;
+                        
+                        const fieldLabel = document.createElement('div');
+                        fieldLabel.className = 'field-label';
+                        fieldLabel.textContent = fieldData.label;
+                        
+                        fieldElement.appendChild(fieldLabel);
+                        zone.appendChild(fieldElement);
+                        
+                        // Initialize events for the new field
+                        initFieldEvents(fieldElement);
+                    });
+                }
+            });
         }
     </script>
     <script src="script.js"></script>

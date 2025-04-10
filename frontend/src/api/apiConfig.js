@@ -1,56 +1,67 @@
-import axios from 'axios';
+// API utility functions
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-// Define the API base URL
-const BASE_API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-
-// Create an axios instance with default configuration
-const api = axios.create({
-  baseURL: BASE_API_URL,
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 10000 // Set a timeout for API requests
-});
-
-// Add request interceptor for logging and authentication
-api.interceptors.request.use(
-  (config) => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
-    // Add authentication token if available
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+export const apiUtils = {
+  getBaseUrl: () => API_BASE_URL,
+  
+  get: async (endpoint) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(`Error fetching from ${endpoint}:`, error);
+      throw error;
     }
-    return config;
   },
-  (error) => {
-    console.error('API Request Error:', error);
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor for error handling
-api.interceptors.response.use(
-  (response) => {
-    console.log(`API Response: ${response.status}`, response.data);
-    return response;
-  },
-  (error) => {
-    if (error.response) {
-      console.error(`API Error (${error.response.status}):`, error.response.data);
-    } else if (error.request) {
-      console.error('API Error: No response received', error.request);
-    } else {
-      console.error('API Error:', error.message);
+  
+  post: async (endpoint, body) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(`Error posting to ${endpoint}:`, error);
+      throw error;
     }
-    return Promise.reject(error);
-  }
-);
+  },
 
-// Utility functions for common API operations
-const apiUtils = {
-  get: (url) => api.get(url).then((response) => response.data),
-  post: (url, data) => api.post(url, data).then((response) => response.data),
-  put: (url, data) => api.put(url, data).then((response) => response.data),
-  delete: (url) => api.delete(url).then((response) => response.data),
+  put: async (endpoint, body) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(`Error putting to ${endpoint}:`, error);
+      throw error;
+    }
+  },
+
+  delete: async (endpoint) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(`Error deleting ${endpoint}:`, error);
+      throw error;
+    }
+  }
 };
-
-export { api, apiUtils, BASE_API_URL };

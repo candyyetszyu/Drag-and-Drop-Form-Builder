@@ -1,4 +1,4 @@
-import { api } from './apiConfig';
+import { apiUtils } from './apiConfig';
 
 // Token management
 const TOKEN_KEY = 'token';
@@ -12,13 +12,13 @@ const tokenService = {
 // Auth service
 export const authService = {
   login: async credentials => {
-    const { data } = await api.post('/auth/login', credentials);
+    const data = await apiUtils.post('/auth/login', credentials);
     tokenService.set(data.token);
     return data;
   },
 
   register: async userData => {
-    const { data } = await api.post('/auth/register', userData);
+    const data = await apiUtils.post('/auth/register', userData);
     tokenService.set(data.token);
     return data;
   },
@@ -27,9 +27,9 @@ export const authService = {
 
   getCurrentUser: async () => {
     if (!tokenService.exists()) return null;
-    const { data } = await api.get('/auth/me');
+    const data = await apiUtils.get('/auth/me');
     return data;
   },
 
   isAuthenticated: () => tokenService.exists()
-}; 
+};

@@ -1,9 +1,6 @@
 // Custom hook for making API requests with loading and error states
 import { useState, useCallback } from 'react';
-import { api } from '../api/apiConfig';
-
-// Remove the unused BASE_URL constant
-// const BASE_URL = 'http://localhost:3001';
+import { apiUtils } from '../api/apiConfig';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false); // Loading state
@@ -14,8 +11,8 @@ export const useApi = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api[method](url, data);
-      return response.data;
+      const response = await apiUtils[method](url, data);
+      return response;
     } catch (err) {
       setError(err.response?.data?.message || err.message);
       throw err;

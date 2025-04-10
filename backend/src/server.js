@@ -234,7 +234,7 @@ app.get('/api/forms/:id', async (req, res) => {
     
     if (dbConnected && pool) {
       const [rows] = await pool.query(
-        'SELECT id, title, description, fields, created_at FROM forms WHERE id = ?',
+        'SELECT id, title, description, fields, created_at, submission_count FROM forms WHERE id = ?',
         [id]
       );
       
@@ -358,20 +358,23 @@ app.post('/api/forms', async (req, res) => {
   }
 });
 
-// API to submit a form
+// API to submit a form - enhanced to ensure MySQL connection
 app.post('/api/forms/:id/submit', async (req, res) => {
   try {
     const { id } = req.params;
     const formData = req.body;
     
+    // Log the submission attempt
+    console.log(`Attempting to submit form ${id} with data:`, JSON.stringify(formData, null, 2));
+    
+    let formExists = false;
+    
     // Check if form exists
     if (dbConnected && pool) {
-      const [rows] = await pool.query(
-        'SELECT id FROM forms WHERE id = ?',
-        [id]
-      );
+      const [rows] = await pool.query('SELECT id FROM forms WHERE id = ?', [id]);
+      formExists = rows.length > 0;
       
-      if (rows.length === 0) {
+      if (!formExists) {
         return res.status(404).json({
           success: false,
           message: 'Form not found'
@@ -379,23 +382,30 @@ app.post('/api/forms/:id/submit', async (req, res) => {
       }
       
       try {
+        // Insert submission into MySQL
         const [result] = await pool.query(
           'INSERT INTO form_submissions (form_id, response_data, submitted_at) VALUES (?, ?, NOW())',
           [id, JSON.stringify(formData)]
         );
         
+        console.log(`Form submission successful. Submission ID: ${result.insertId}`);
+        
+        // Add tracking information
+        await pool.query(
+          'UPDATE forms SET submission_count = submission_count + 1 WHERE id = ?', 
+          [id]
+        );
+        
         return res.status(201).json({
           success: true,
-          message: 'Form submitted successfully',
+          message: 'Form submitted successfully to database',
           submissionId: result.insertId
         });
       } catch (dbError) {
-        console.error('Database error saving submission:', dbError);
-        // Continue with file storage fallback
+        console.error('Database error submitting form:', dbError);
+        // Fall through to fallback options
       }
-    }
-    
-    if (fileStorageEnabled) {
+    } else if (fileStorageEnabled && fileStorage) {
       const form = await fileStorage.getFormById(id);
       if (!form) {
         return res.status(404).json({
@@ -411,31 +421,31 @@ app.post('/api/forms/:id/submit', async (req, res) => {
         message: 'Form submitted successfully (file storage)',
         submissionId: submission.id
       });
-    }
-    
-    const form = inMemoryStorage.forms.find(form => form.id === id);
-    if (!form) {
-      return res.status(404).json({
-        success: false,
-        message: 'Form not found'
+    } else {
+      const form = inMemoryStorage.forms.find(form => form.id === id);
+      if (!form) {
+        return res.status(404).json({
+          success: false,
+          message: 'Form not found'
+        });
+      }
+      
+      const submissionId = Date.now().toString();
+      const submission = {
+        id: submissionId,
+        formId: id,
+        data: formData,
+        submitted_at: new Date().toISOString()
+      };
+      
+      inMemoryStorage.submissions.push(submission);
+      
+      res.status(201).json({
+        success: true,
+        message: 'Form submitted successfully',
+        submissionId
       });
     }
-    
-    const submissionId = Date.now().toString();
-    const submission = {
-      id: submissionId,
-      formId: id,
-      data: formData,
-      submitted_at: new Date().toISOString()
-    };
-    
-    inMemoryStorage.submissions.push(submission);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Form submitted successfully',
-      submissionId
-    });
   } catch (error) {
     console.error('Error submitting form:', error);
     res.status(500).json({
@@ -482,11 +492,11 @@ app.get('/api/forms/:id/submissions', async (req, res) => {
 });
 
 // Serve static files for the admin dashboard
-app.use('/admin/styles', express.static(path.join(__dirname, '../backend/public/styles')));
+app.use('/admin/styles', express.static(path.join(__dirname, '../public/styles')));
 
 // Serve the admin dashboard
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../backend/public/admin/dashboard.html'));
+  res.sendFile(path.join(__dirname, '../public/admin/dashboard.html'));
 });
 
 // API endpoint for admin to get all forms
@@ -640,13 +650,18 @@ if (fs.existsSync(buildPath)) {
             .method { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.25rem; margin-right: 0.5rem; font-weight: bold; }
             .get { background: #dbeafe; color: #1e40af; }
             .post { background: #dcfce7; color: #166534; }
+            .put { background: #fef3c7; color: #92400e; }
+            .delete { background: #fee2e2; color: #b91c1c; }
             pre { background: #f8fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
             a { color: #2563eb; }
+            .section-title { margin-top: 2rem; color: #4b5563; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
           </style>
         </head>
         <body>
           <h1>Marketing Campaign API</h1>
-          <p>Backend server is running. API endpoints available:</p>
+          <p>Backend server is running. All API endpoints available:</p>
+          
+          <h2 class="section-title">Form Management</h2>
           
           <div class="endpoint">
             <span class="method get">GET</span>
@@ -689,6 +704,35 @@ if (fs.existsSync(buildPath)) {
 }
             </pre>
           </div>
+
+          <div class="endpoint">
+            <span class="method put">PUT</span>
+            <strong>/api/forms/:id</strong>
+            <p>Update an existing form</p>
+            <pre>
+// Example request body:
+{
+  "title": "Updated Customer Survey",
+  "description": "We've improved our survey",
+  "fields": [
+    {
+      "id": "name",
+      "type": "text",
+      "question": "Your full name",
+      "isRequired": true
+    }
+  ]
+}
+            </pre>
+          </div>
+
+          <div class="endpoint">
+            <span class="method delete">DELETE</span>
+            <strong>/api/forms/:id</strong>
+            <p>Delete a form</p>
+          </div>
+          
+          <h2 class="section-title">Form Submissions</h2>
           
           <div class="endpoint">
             <span class="method post">POST</span>
@@ -704,9 +748,81 @@ if (fs.existsSync(buildPath)) {
 }
             </pre>
           </div>
+
+          <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/api/forms/:id/submissions</strong>
+            <p>Get all submissions for a specific form</p>
+            <a href="/api/forms/1/submissions" target="_blank">Test with sample form</a>
+          </div>
+
+          <h2 class="section-title">File Upload</h2>
+          
+          <div class="endpoint">
+            <span class="method post">POST</span>
+            <strong>/api/upload</strong>
+            <p>Upload a file</p>
+            <pre>
+// Use multipart/form-data with these fields:
+- file: The file to upload
+- formId: ID of the form the file belongs to
+- fieldId: ID of the field the file belongs to (optional)
+            </pre>
+          </div>
+
+          <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/api/files/:formId</strong>
+            <p>Get all files for a specific form</p>
+            <a href="/api/files/1" target="_blank">Test with sample form</a>
+          </div>
+
+          <h2 class="section-title">Admin</h2>
+          
+          <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/api/admin/forms</strong>
+            <p>Get all forms (admin view)</p>
+            <a href="/api/admin/forms" target="_blank">Test this endpoint</a>
+          </div>
+          
+          <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/api/admin/forms/:id</strong>
+            <p>Get a specific form (admin view)</p>
+            <a href="/api/admin/forms/1" target="_blank">Test with sample form</a>
+          </div>
+          
+          <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/api/admin/submissions</strong>
+            <p>Get all submissions (admin view)</p>
+            <a href="/api/admin/submissions" target="_blank">Test this endpoint</a>
+          </div>
+          
+          <div class="endpoint">
+            <span class="method get">GET</span>
+            <strong>/api/admin/submissions/:id</strong>
+            <p>Get a specific submission (admin view)</p>
+            <a href="/api/admin/submissions/1" target="_blank">Test with sample submission</a>
+          </div>
+          
+          <div class="endpoint">
+            <span class="method delete">DELETE</span>
+            <strong>/api/admin/forms/:id</strong>
+            <p>Delete a form (admin)</p>
+          </div>
+          
+          <div class="endpoint">
+            <span class="method delete">DELETE</span>
+            <strong>/api/admin/submissions/:id</strong>
+            <p>Delete a submission (admin)</p>
+          </div>
           
           <p>To run the frontend separately:</p>
           <pre>cd frontend && npm start</pre>
+
+          <p>Admin Dashboard: <a href="/admin" target="_blank">/admin</a></p>
         </body>
       </html>
     `);
@@ -714,6 +830,31 @@ if (fs.existsSync(buildPath)) {
   
   console.log('Frontend build not found. Serving API documentation page.');
 }
+
+// Route to serve the form viewer for direct form access
+app.get('/form/:id', (req, res) => {
+  const formId = req.params.id;
+  
+  // Check if form exists (optional verification step)
+  const checkForm = async () => {
+    if (dbConnected && pool) {
+      try {
+        const [rows] = await pool.query('SELECT id FROM forms WHERE id = ?', [formId]);
+        if (rows.length === 0) {
+          return res.status(404).send('Form not found');
+        }
+      } catch (error) {
+        console.error('Error checking form existence:', error);
+        // Continue anyway to avoid blocking access
+      }
+    }
+    
+    // Serve the form viewer HTML
+    res.sendFile(path.join(__dirname, '../public/form-viewer.html'));
+  };
+  
+  checkForm();
+});
 
 // Function to find an available port
 const findAvailablePort = async (startPort, maxTries = 10) => {

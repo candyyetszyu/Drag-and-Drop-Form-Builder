@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDrop } from 'react-dnd';
 // Update import path for FieldRenderer
 import FieldRenderer from '../fields/FieldRenderer';
 import DraggableField from './DraggableField';
 import { useFormSubmission } from '../../hooks/useFormSubmission';
+import { apiUtils } from '../../api/apiConfig';
 
 const FormCanvas = ({ 
   fields, 
@@ -25,6 +26,51 @@ const FormCanvas = ({
 
   // Add validation state
   const [validationErrors, setValidationErrors] = useState({});
+  // Add field visibility state
+  const [fieldVisibility, setFieldVisibility] = useState({});
+  // Add state for form URL
+  const [formUrl, setFormUrl] = useState('');
+  // Add state for URL notification
+  const [showUrlNotification, setShowUrlNotification] = useState(false);
+  
+  // Get base URL from window location
+  const baseUrl = window.location.origin;
+
+  // Initialize field visibility when fields change
+  useEffect(() => {
+    const initialVisibility = {};
+    fields.forEach(field => {
+      // Set all fields to visible by default
+      initialVisibility[field.id] = true;
+    });
+    setFieldVisibility(initialVisibility);
+  }, [fields]);
+  
+  // Generate and set form URL when formId changes
+  useEffect(() => {
+    if (formId) {
+      const url = `${baseUrl}/form/${formId}`;
+      setFormUrl(url);
+      
+      // Check if the form exists in the database
+      const checkFormInDatabase = async () => {
+        try {
+          const response = await apiUtils.get(`/forms/${formId}`);
+          if (response.success) {
+            setShowUrlNotification(true);
+            // Hide notification after 10 seconds
+            setTimeout(() => {
+              setShowUrlNotification(false);
+            }, 10000);
+          }
+        } catch (error) {
+          console.error('Error checking form:', error);
+        }
+      };
+      
+      checkFormInDatabase();
+    }
+  }, [formId, baseUrl]);
 
   // Helper function to validate the form
   const validateForm = (fields, data) => {
@@ -125,10 +171,28 @@ const FormCanvas = ({
           c.optionValue === value && c.action && c.targetId
         );
         
-        // Apply the conditions
+        // Reset visibility for fields that depend on this dropdown
+        const allConditionTargets = changedField.conditions
+          .map(c => c.targetId)
+          .filter((id, index, array) => array.indexOf(id) === index); // unique values
+        
+        // First, reset all affected fields to visible
+        if (allConditionTargets.length > 0) {
+          setFieldVisibility(prev => {
+            const updated = { ...prev };
+            allConditionTargets.forEach(targetId => {
+              updated[targetId] = true;
+            });
+            return updated;
+          });
+        }
+        
+        // Apply the active conditions
         activeConditions.forEach(condition => {
           const targetField = fields.find(f => f.id === condition.targetId);
-          if (!targetField) return;
+          if (!targetField) {
+            return;
+          }
           
           if (condition.action === 'skip_to') {
             // Scroll to the target field
@@ -136,10 +200,28 @@ const FormCanvas = ({
             if (targetElement) {
               targetElement.scrollIntoView({ behavior: 'smooth' });
             }
+          } else if (condition.action === 'show') {
+            // Show the target field
+            setFieldVisibility(prev => ({
+              ...prev,
+              [condition.targetId]: true
+            }));
+          } else if (condition.action === 'hide') {
+            // Hide the target field
+            setFieldVisibility(prev => ({
+              ...prev,
+              [condition.targetId]: false
+            }));
+            
+            // Clear any data for hidden fields
+            if (formData[condition.targetId]) {
+              setFormData(prev => {
+                const updated = { ...prev };
+                delete updated[condition.targetId];
+                return updated;
+              });
+            }
           }
-          
-          // Additional logic for show/hide could be implemented here
-          // This would require modifying the component state to track visibility
         });
       }
     }
@@ -170,8 +252,9 @@ const FormCanvas = ({
       }
     }
     
-    // Validate form before submission
-    const errors = validateForm(fields, formData);
+    // Validate form before submission - only validate visible fields
+    const visibleFields = fields.filter(field => fieldVisibility[field.id] !== false);
+    const errors = validateForm(visibleFields, formData);
     if (Object.keys(errors).length > 0) {
       // Show validation errors
       console.error("Form validation failed:", errors);
@@ -182,11 +265,36 @@ const FormCanvas = ({
     // Continue with submission
     if (isPreview && formId) {
       try {
-        await submitForm(formId, formData);
+        // Store the form ID with the submission data for tracking
+        const submissionData = {
+          ...formData,
+          _formId: formId, // Add internal tracking field
+          _submittedAt: new Date().toISOString()
+        };
+        
+        const response = await submitForm(formId, submissionData);
+        console.log("Form submission response:", response);
+        
+        // Clear form data after successful submission if not already set by the hook
+        if (!submitted) {
+          setFormData({});
+          setValidationErrors({});
+        }
       } catch (err) {
         console.error("Error submitting form:", err);
       }
     }
+  };
+  
+  // Function to copy form URL to clipboard
+  const copyUrlToClipboard = () => {
+    navigator.clipboard.writeText(formUrl)
+      .then(() => {
+        alert('Form URL copied to clipboard!');
+      })
+      .catch(err => {
+        console.error('Failed to copy URL: ', err);
+      });
   };
 
   // Add drop indicator style
@@ -216,75 +324,130 @@ const FormCanvas = ({
   }
 
   return (
-    <div 
-      className="card" 
-      ref={(node) => {
-        drop(node);
-        canvasRef.current = node;
-      }}
-      style={{
-        ...dropIndicatorStyle,
-        minHeight: '200px',
-        transition: 'background-color 0.2s, border 0.2s',
-        backgroundColor: themeColors.cardBackground,
-      }}
-    >
-      {fields.length === 0 ? (
-        <div className="text-center padding-responsive">
-          <p>Drag fields here from the panel to build your form.</p>
+    <div className="form-canvas-container">
+      {/* URL Notification */}
+      {showUrlNotification && formUrl && (
+        <div className="url-notification" style={{
+          backgroundColor: '#f0f9ff',
+          border: '1px solid #bae6fd',
+          borderRadius: '0.375rem',
+          padding: '0.75rem',
+          marginBottom: '1rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <strong>Share this form: </strong> 
+            <a href={formUrl} target="_blank" rel="noopener noreferrer">{formUrl}</a>
+          </div>
+          <button 
+            onClick={copyUrlToClipboard}
+            className="btn btn-small btn-secondary"
+            style={{ marginLeft: '0.5rem' }}
+          >
+            Copy URL
+          </button>
         </div>
-      ) : (
-        <form className="space-responsive" onSubmit={handleSubmit}>
-          {fields.map((field, index) => (
-            isPreview ? (
-              <div
-                key={field.id}
-                id={`field-${field.id}`}
-                className="padding-responsive margin-responsive field-container"
-              >
-                <FieldRenderer
-                  field={field}
-                  isPreview={isPreview}
-                  onChange={(value) => handleFieldChange(field.id, value)}
-                />
-                {validationErrors[field.id] && (
-                  <div className="text-red-500 text-sm mt-1">
-                    {validationErrors[field.id]}
+      )}
+      
+      <div 
+        className="card" 
+        ref={(node) => {
+          drop(node);
+          canvasRef.current = node;
+        }}
+        style={{
+          ...dropIndicatorStyle,
+          minHeight: '200px',
+          transition: 'background-color 0.2s, border 0.2s',
+          backgroundColor: themeColors.cardBackground,
+        }}
+      >
+        {fields.length === 0 ? (
+          <div className="text-center padding-responsive">
+            <p>Drag fields here from the panel to build your form.</p>
+          </div>
+        ) : (
+          <form className="space-responsive" onSubmit={handleSubmit}>
+            {fields.map((field, index) => (
+              // Skip rendering if the field should be hidden
+              fieldVisibility[field.id] !== false && (
+                isPreview ? (
+                  <div
+                    key={field.id}
+                    id={`field-${field.id}`}
+                    className="padding-responsive margin-responsive field-container"
+                  >
+                    <FieldRenderer
+                      field={field}
+                      isPreview={isPreview}
+                      onChange={(value) => handleFieldChange(field.id, value)}
+                    />
+                    {validationErrors[field.id] && (
+                      <div className="text-red-500 text-sm mt-1">
+                        {validationErrors[field.id]}
+                      </div>
+                    )}
                   </div>
-                )}
+                ) : (
+                  <DraggableField
+                    key={field.id}
+                    field={field}
+                    index={index}
+                    onSelect={onFieldSelect}
+                    onDelete={onFieldDelete}
+                    onMove={onReorder}
+                  >
+                    <FieldRenderer
+                      field={field}
+                      isPreview={isPreview}
+                      onChange={(value) => handleFieldChange(field.id, value)}
+                    />
+                  </DraggableField>
+                )
+              )
+            ))}
+            
+            {isPreview && (
+              <div className="text-center padding-responsive">
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={loading}
+                  style={{ backgroundColor: themeColors.primaryColor }}
+                >
+                  {loading ? 'Submitting...' : 'Submit Form'}
+                </button>
+                {error && <div className="form-error">{error}</div>}
               </div>
-            ) : (
-              <DraggableField
-                key={field.id}
-                field={field}
-                index={index}
-                onSelect={onFieldSelect}
-                onDelete={onFieldDelete}
-                onMove={onReorder}
-              >
-                <FieldRenderer
-                  field={field}
-                  isPreview={isPreview}
-                  onChange={(value) => handleFieldChange(field.id, value)}
-                />
-              </DraggableField>
-            )
-          ))}
-          
-          {isPreview && (
-            <div className="text-center padding-responsive">
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-                disabled={loading}
-                style={{ backgroundColor: themeColors.primaryColor }}
-              >
-                {loading ? 'Submitting...' : 'Submit Form'}
-              </button>
-              {error && <div className="form-error">{error}</div>}
-            </div>
-          )}
-        </form>
+            )}
+          </form>
+        )}
+      </div>
+      
+      {/* Form URL display at the bottom for builder mode */}
+      {!isPreview && formId && (
+        <div className="form-url-container" style={{
+          marginTop: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '0.375rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <strong>Form URL: </strong>
+            <span>{formUrl}</span>
+          </div>
+          <button 
+            onClick={copyUrlToClipboard}
+            className="btn btn-small btn-secondary"
+          >
+            Copy URL
+          </button>
+        </div>
       )}
     </div>
   );

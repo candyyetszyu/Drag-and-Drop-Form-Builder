@@ -1,0 +1,62 @@
+// ...existing code...
+
+/* Drag and Drop Styles */
+.field-item {
+  cursor: move;
+  padding: 10px;
+  margin: 5px 0;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  position: relative;
+}
+
+.field-item.dragging {
+  opacity: 0.5;
+}
+
+.drop-zone {
+  min-height: 100px;
+  border: 2px dashed #ccc;
+  border-radius: 6px;
+  padding: 20px;
+  margin: 15px 0;
+}
+
+.drop-zone.drag-over {
+  background-color: rgba(0, 123, 255, 0.1);
+  border-color: #007bff;
+}
+
+.delete-field {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+}
+
+.field-item:hover .delete-field {
+  display: block;
+}
+
+.fields-sidebar {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.fields-sidebar .field-item {
+  cursor: grab;
+}
+
+/* ...existing code... */

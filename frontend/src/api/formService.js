@@ -1,18 +1,20 @@
-import { api } from './apiConfig';
+import { apiUtils } from './apiConfig';
 
 export const formService = {
-  getAll: () => api.get('/forms').then(({ data }) => data),
-  getById: id => api.get(`/forms/${id}`).then(({ data }) => data),
-  create: form => api.post('/forms', form).then(({ data }) => data),
-  update: (id, form) => api.put(`/forms/${id}`, form).then(({ data }) => data),
-  delete: id => api.delete(`/forms/${id}`).then(({ data }) => data),
-  getSubmissions: id => api.get(`/forms/${id}/submissions`).then(({ data }) => data),
-  submitForm: (id, data) => api.post(`/forms/${id}/submit`, data).then(({ data }) => data),
+  getAll: () => apiUtils.get('/forms'),
+  getById: id => apiUtils.get(`/forms/${id}`),
+  create: form => apiUtils.post('/forms', form),
+  update: (id, form) => apiUtils.put(`/forms/${id}`, form),
+  delete: id => apiUtils.delete(`/forms/${id}`),
+  getSubmissions: id => apiUtils.get(`/forms/${id}/submissions`),
+  submitForm: (id, data) => apiUtils.post(`/forms/${id}/submit`, data),
   uploadFile: (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post('/forms/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    
+    return fetch(`${apiUtils.getBaseUrl()}/forms/upload`, {
+      method: 'POST',
+      body: formData,
+    }).then(response => response.json());
   },
 };
