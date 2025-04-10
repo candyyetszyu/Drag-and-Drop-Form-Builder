@@ -140,9 +140,6 @@ This domain model illustrates the relationships between the main entities in the
 │   ├── initialize.sql            # Database schema
 │   ├── init-db.js                # DB initialization script
 │   └── modules/                  # SQL modules
-│       ├── ID01_Forms.sql        # Forms table definition
-│       ├── ID02_Fields.sql       # Fields table definition
-│       └── ID08_File_Uploads.sql # File uploads table definition
 ├── scripts/                      # Utility scripts
 │   └── test-db-connection.js     # Database connection tester
 ├── .env                          # Environment variables
