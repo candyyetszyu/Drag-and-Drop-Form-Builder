@@ -630,5 +630,6 @@ This project was developed with assistance from:
 
 - **Claude 3.7 Sonnet** - Helped with code implementation and debugging
 - **ChatGPT-4o** - Assisted in project design and architecture
+- **Deepseek v1** - Assisted in project design and architecture
 
 We also want to thank the open-source community for the various libraries and frameworks that made this project possible.
