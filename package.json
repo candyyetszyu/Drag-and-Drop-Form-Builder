@@ -1,0 +1,17 @@
+{
+  "name": "marketing-campaign",
+  "version": "1.0.0",
+  "description": "Marketing Campaign Form Builder",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start",
+    "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "build": "node scripts/build.js",
+    "setup-db": "node scripts/setup-db.js",
+    "test-run": "node scripts/test-run.js"
+  },
+  "dependencies": {
+    "concurrently": "^7.0.0"
+  }
+}

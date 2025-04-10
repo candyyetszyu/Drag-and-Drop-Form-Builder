@@ -1,0 +1,33 @@
+/* Replacing @apply directives with equivalent CSS */
+@layer utilities {
+  .container {
+    max-width: 80rem; /* max-w-7xl */
+    margin-left: auto; /* mx-auto */
+    margin-right: auto;
+    padding-left: 1rem; /* px-4 */
+    padding-right: 1rem;
+  }
+  .grid-cols-auto {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr)); /* grid-cols-1 */
+  }
+  .flex-col-auto {
+    display: flex;
+    flex-direction: column; /* flex-col */
+  }
+  .text-responsive {
+    font-size: 0.875rem; /* text-sm */
+  }
+  .space-responsive {
+    margin-bottom: 1rem; /* space-y-4 */
+  }
+  .padding-responsive {
+    padding: 1rem; /* p-4 */
+  }
+  .margin-responsive {
+    margin: 1rem; /* m-4 */
+  }
+  .gap-responsive {
+    gap: 1rem; /* gap-4 */
+  }
+}

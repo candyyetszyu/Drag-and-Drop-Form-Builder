@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Campaign Builder</title>
+  <!-- Use %PUBLIC_URL% for static assets in public folder -->
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9fafb;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid #3b82f6;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 15px;
+      background-color: #3b82f6;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Loading Marketing Campaign Builder...</p>
+    </div>
+  </div>
+
+  <noscript>
+    <div style="max-width: 600px; margin: 2rem auto; padding: 1rem; text-align: center;">
+      <h1>JavaScript Required</h1>
+      <p>This application requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
+    </div>
+  </noscript>
+
+  <script>
+    // Add a timeout to show an error message if the app doesn't load
+    setTimeout(function() {
+      const rootEl = document.getElementById('root');
+      if (rootEl && rootEl.innerHTML.includes('Loading')) {
+        rootEl.innerHTML = `
+          <div class="container" style="text-align: center; padding-top: 50px;">
+            <h1>Unable to Load Application</h1>
+            <p>There seems to be an issue loading the Marketing Campaign Builder. Please try refreshing the page.</p>
+            <button class="btn" onclick="window.location.reload()">Refresh Page</button>
+          </div>
+        `;
+      }
+    }, 10000);
+  </script>
+</body>
+</html>

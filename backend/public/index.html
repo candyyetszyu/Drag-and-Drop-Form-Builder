@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drag and Drop</title>
+  <style>
+    #dropzone {
+      width: 300px;
+      height: 200px;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 50px auto;
+      font-family: Arial, sans-serif;
+      color: #666;
+    }
+    #dropzone.dragover {
+      border-color: #000;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="dropzone">Drag and drop files here</div>
+  <script>
+    const dropzone = document.getElementById('dropzone');
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      alert(`You dropped ${files.length} file(s).`);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Builder</title>
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/responsive.css">
+</head>
+<body>
+  <div class="container flex-col-auto">
+    <header class="padding-responsive">
+      <h1 class="text-responsive">Form Builder</h1>
+    </header>
+    <main class="flex-col-auto">
+      <div class="flex">
+        <!-- Sidebar -->
+        <aside class="padding-responsive">
+          <h2 class="text-responsive">Field Types</h2>
+          <button class="btn btn-primary margin-responsive">Text Input</button>
+          <button class="btn btn-primary margin-responsive">Dropdown</button>
+          <button class="btn btn-primary margin-responsive">Table</button>
+          <button class="btn btn-primary margin-responsive">File Upload</button>
+        </aside>
+        <!-- Canvas -->
+        <section class="padding-responsive flex-col-auto">
+          <h2 class="text-responsive">Form Canvas</h2>
+          <div class="card">
+            <p>Drag fields here to build your form.</p>
+          </div>
+        </section>
+        <!-- Configuration Panel -->
+        <aside class="padding-responsive">
+          <h2 class="text-responsive">Field Configuration</h2>
+          <div class="card">
+            <p>Select a field to configure its properties.</p>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

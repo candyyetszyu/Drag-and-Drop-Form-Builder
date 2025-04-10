@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Builder Admin</title>
+  <link rel="stylesheet" href="../styles/admin.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9fafb;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    h1 {
+      color: #2563eb;
+      margin: 0;
+    }
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      border-bottom: 2px solid #2563eb;
+      color: #2563eb;
+      font-weight: 500;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    th {
+      background-color: #f9fafb;
+      font-weight: 500;
+      color: #4b5563;
+    }
+    tr:hover {
+      background-color: #f3f4f6;
+    }
+    .btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      border: none;
+      transition: background-color 0.2s;
+    }
+    .btn-primary {
+      background-color: #2563eb;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+    .btn-secondary {
+      background-color: #e5e7eb;
+      color: #1f2937;
+    }
+    .btn-secondary:hover {
+      background-color: #d1d5db;
+    }
+    .btn-small {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-green {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .badge-blue {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 0;
+      color: #6b7280;
+    }
+    .form-details {
+      display: none;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background-color: white;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .spinner {
+      border: 3px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top: 3px solid #2563eb;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Form Builder Admin</h1>
+      <div>
+        <button class="btn btn-primary" id="refresh-btn">Refresh Data</button>
+        <button class="btn btn-secondary" id="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="forms">Forms</div>
+        <div class="tab" data-tab="submissions">Submissions</div>
+      </div>
+
+      <div id="forms-panel">
+        <div class="controls" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="search-forms" placeholder="Search forms..." style="padding: 8px; border-radius: 4px; border: 1px solid #d1d5db;">
+            <select id="sort-forms" style="padding: 8px; border-radius: 4px; border: 1px solid #d1d5db;">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="alphabetical">Alphabetical</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="create-form-btn">Create New Form</button>
+        </div>
+
+        <div id="forms-table-container">
+          <table id="forms-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Created</th>
+                <th>Submissions</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="forms-table-body">
+              <!-- Form rows will be dynamically added here -->
+            </tbody>
+          </table>
+          <div id="forms-empty-state" class="empty-state" style="display: none;">
+            <p>No forms found. Create your first form to get started.</p>
+            <button class="btn btn-primary" id="create-first-form-btn">Create Form</button>
+          </div>
+          <div id="forms-loading" class="empty-state">
+            <span class="spinner"></span> Loading forms...
+          </div>
+        </div>
+      </div>
+
+      <div id="submissions-panel" style="display: none;">
+        <div class="controls" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+          <div style="display: flex; gap: 10px;">
+            <select id="form-filter" style="padding: 8px; border-radius: 4px; border: 1px solid #d1d5db;">
+              <option value="all">All Forms</option>
+              <!-- Form options will be dynamically added here -->
+            </select>
+            <input type="text" id="search-submissions" placeholder="Search submissions..." style="padding: 8px; border-radius: 4px; border: 1px solid #d1d5db;">
+          </div>
+          <button class="btn btn-secondary" id="export-btn">Export CSV</button>
+        </div>
+
+        <div id="submissions-table-container">
+          <table id="submissions-table">
+            <thead>
+              <tr>
+                <th>Form</th>
+                <th>Submitted</th>
+                <th>Data</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-table-body">
+              <!-- Submission rows will be dynamically added here -->
+            </tbody>
+          </table>
+          <div id="submissions-empty-state" class="empty-state" style="display: none;">
+            <p>No submissions found.</p>
+          </div>
+          <div id="submissions-loading" class="empty-state">
+            <span class="spinner"></span> Loading submissions...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form View Modal -->
+  <div id="form-modal" class="modal">
+    <div class="modal-content">
+      <h2>Form Details</h2>
+      <div id="form-details"></div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn btn-secondary" id="close-form-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission View Modal -->
+  <div id="submission-modal" class="modal">
+    <div class="modal-content">
+      <h2>Submission Details</h2>
+      <div id="submission-details"></div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn btn-secondary" id="close-submission-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Tab switching
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          this.classList.add('active');
+          
+          // Hide all panels
+          document.getElementById('forms-panel').style.display = 'none';
+          document.getElementById('submissions-panel').style.display = 'none';
+          
+          // Show the selected panel
+          const tabName = this.getAttribute('data-tab');
+          document.getElementById(tabName + '-panel').style.display = 'block';
+          
+          // Load data for the selected tab
+          if (tabName === 'forms') {
+            loadForms();
+          } else if (tabName === 'submissions') {
+            loadSubmissions();
+          }
+        });
+      });
+      
+      // Fetch forms from API
+      function loadForms() {
+        const tbody = document.getElementById('forms-table-body');
+        const loading = document.getElementById('forms-loading');
+        const emptyState = document.getElementById('forms-empty-state');
+        
+        // Show loading state
+        tbody.innerHTML = '';
+        loading.style.display = 'block';
+        emptyState.style.display = 'none';
+        
+        // Fetch forms from API
+        fetch('/api/forms')
+          .then(response => response.json())
+          .then(data => {
+            loading.style.display = 'none';
+            
+            if (data.forms && data.forms.length > 0) {
+              // Populate table with forms
+              data.forms.forEach(form => {
+                const created = new Date(form.created_at).toLocaleDateString();
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${form.title}</td>
+                  <td>${created}</td>
+                  <td>0</td>
+                  <td><span class="badge badge-green">Active</span></td>
+                  <td>
+                    <button class="btn btn-small btn-secondary view-form" data-id="${form.id}">View</button>
+                    <button class="btn btn-small btn-secondary edit-form" data-id="${form.id}">Edit</button>
+                    <button class="btn btn-small btn-secondary delete-form" data-id="${form.id}">Delete</button>
+                  </td>
+                `;
+                tbody.appendChild(tr);
+              });
+              
+              // Add event listeners to buttons
+              document.querySelectorAll('.view-form').forEach(btn => {
+                btn.addEventListener('click', function() {
+                  const formId = this.getAttribute('data-id');
+                  viewForm(formId);
+                });
+              });
+              
+              document.querySelectorAll('.edit-form').forEach(btn => {
+                btn.addEventListener('click', function() {
+                  const formId = this.getAttribute('data-id');
+                  window.location.href = `/form-builder.html?id=${formId}`;
+                });
+              });
+              
+              document.querySelectorAll('.delete-form').forEach(btn => {
+                btn.addEventListener('click', function() {
+                  const formId = this.getAttribute('data-id');
+                  if (confirm('Are you sure you want to delete this form?')) {
+                    deleteForm(formId);
+                  }
+                });
+              });
+            } else {
+              // Show empty state
+              emptyState.style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Error loading forms:', error);
+            loading.style.display = 'none';
+            emptyState.style.display = 'block';
+            emptyState.innerHTML = '<p>Error loading forms. Please try again later.</p>';
+          });
+      }
+      
+      // Fetch submissions from API
+      function loadSubmissions() {
+        const tbody = document.getElementById('submissions-table-body');
+        const loading = document.getElementById('submissions-loading');
+        const emptyState = document.getElementById('submissions-empty-state');
+        
+        // Show loading state
+        tbody.innerHTML = '';
+        loading.style.display = 'block';
+        emptyState.style.display = 'none';
+        
+        // Fetch submissions from API
+        fetch('/api/submissions')
+          .then(response => response.json())
+          .then(data => {
+            loading.style.display = 'none';
+            
+            if (data.submissions && data.submissions.length > 0) {
+              // Populate table with submissions
+              data.submissions.forEach(submission => {
+                const submitted = new Date(submission.submitted_at).toLocaleDateString();
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td>${submission.form_title || 'Unknown Form'}</td>
+                  <td>${submitted}</td>
+                  <td>${Object.keys(submission.response_data || {}).length} fields</td>
+                  <td>
+                    <button class="btn btn-small btn-secondary view-submission" data-id="${submission.id}">View</button>
+                    <button class="btn btn-small btn-secondary delete-submission" data-id="${submission.id}">Delete</button>
+                  </td>
+                `;
+                tbody.appendChild(tr);
+              });
+              
+              // Add event listeners to buttons
+              document.querySelectorAll('.view-submission').forEach(btn => {
+                btn.addEventListener('click', function() {
+                  const submissionId = this.getAttribute('data-id');
+                  viewSubmission(submissionId);
+                });
+              });
+              
+              document.querySelectorAll('.delete-submission').forEach(btn => {
+                btn.addEventListener('click', function() {
+                  const submissionId = this.getAttribute('data-id');
+                  if (confirm('Are you sure you want to delete this submission?')) {
+                    deleteSubmission(submissionId);
+                  }
+                });
+              });
+            } else {
+              // Show empty state
+              emptyState.style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Error loading submissions:', error);
+            loading.style.display = 'none';
+            emptyState.style.display = 'block';
+            emptyState.innerHTML = '<p>Error loading submissions. Please try again later.</p>';
+          });
+      }
+      
+      // View form details
+      function viewForm(formId) {
+        const modal = document.getElementById('form-modal');
+        const formDetails = document.getElementById('form-details');
+        
+        // Show loading state
+        formDetails.innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading form details...</div>';
+        modal.style.display = 'flex';
+        
+        // Fetch form details from API
+        fetch(`/api/forms/${formId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success && data.form) {
+              const form = data.form;
+              const created = new Date(form.created_at).toLocaleDateString();
+              
+              // Format fields for display
+              let fieldsHtml = '<table style="width: 100%; margin-top: 10px;"><thead><tr><th>Field Type</th><th>Question</th><th>Required</th></tr></thead><tbody>';
+              
+              if (form.fields && form.fields.length > 0) {
+                form.fields.forEach(field => {
+                  fieldsHtml += `
+                    <tr>
+                      <td>${field.type}</td>
+                      <td>${field.question}</td>
+                      <td>${field.isRequired ? 'Yes' : 'No'}</td>
+                    </tr>
+                  `;
+                });
+              } else {
+                fieldsHtml += '<tr><td colspan="3">No fields defined for this form.</td></tr>';
+              }
+              
+              fieldsHtml += '</tbody></table>';
+              
+              // Display form details
+              formDetails.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                  <strong>Title:</strong> ${form.title}
+                </div>
+                <div style="margin-bottom: 15px;">
+                  <strong>Description:</strong> ${form.description || 'No description'}
+                </div>
+                <div style="margin-bottom: 15px;">
+                  <strong>Created:</strong> ${created}
+                </div>
+                <div style="margin-bottom: 15px;">
+                  <strong>Form Link:</strong> <a href="/form/${formId}" target="_blank">/form/${formId}</a>
+                </div>
+                <div>
+                  <strong>Fields:</strong>
+                  ${fieldsHtml}
+                </div>
+              `;
+            } else {
+              formDetails.innerHTML = '<div class="empty-state">Error loading form details. Please try again later.</div>';
+            }
+          })
+          .catch(error => {
+            console.error('Error loading form details:', error);
+            formDetails.innerHTML = '<div class="empty-state">Error loading form details. Please try again later.</div>';
+          });
+      }
+      
+      // View submission details
+      function viewSubmission(submissionId) {
+        const modal = document.getElementById('submission-modal');
+        const submissionDetails = document.getElementById('submission-details');
+        
+        // Show loading state
+        submissionDetails.innerHTML = '<div class="empty-state"><span class="spinner"></span> Loading submission details...</div>';
+        modal.style.display = 'flex';
+        
+        // Fetch submission details from API
+        fetch(`/api/submissions/${submissionId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success && data.submission) {
+              const submission = data.submission;
+              const submitted = new Date(submission.submitted_at).toLocaleDateString();
+              
+              // Format response data for display
+              let responseDataHtml = '<table style="width: 100%; margin-top: 10px;"><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody>';
+              
+              if (submission.response_data) {
+                Object.entries(submission.response_data).forEach(([key, value]) => {
+                  responseDataHtml += `
+                    <tr>
+                      <td>${key}</td>
+                      <td>${typeof value === 'object' ? JSON.stringify(value) : value}</td>
+                    </tr>
+                  `;
+                });
+              } else {
+                responseDataHtml += '<tr><td colspan="2">No response data available.</td></tr>';
+              }
+              
+              responseDataHtml += '</tbody></table>';
+              
+              // Display submission details
+              submissionDetails.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                  <strong>Form:</strong> ${submission.form_title || 'Unknown Form'}
+                </div>
+                <div style="margin-bottom: 15px;">
+                  <strong>Submitted:</strong> ${submitted}
+                </div>
+                <div>
+                  <strong>Response Data:</strong>
+                  ${responseDataHtml}
+                </div>
+              `;
+            } else {
+              submissionDetails.innerHTML = '<div class="empty-state">Error loading submission details. Please try again later.</div>';
+            }
+          })
+          .catch(error => {
+            console.error('Error loading submission details:', error);
+            submissionDetails.innerHTML = '<div class="empty-state">Error loading submission details. Please try again later.</div>';
+          });
+      }
+      
+      // Delete form
+      function deleteForm(formId) {
+        fetch(`/api/forms/${formId}`, { method: 'DELETE' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Form deleted successfully.');
+              loadForms();
+            } else {
+              alert('Error deleting form: ' + (data.message || 'Unknown error'));
+            }
+          })
+          .catch(error => {
+            console.error('Error deleting form:', error);
+            alert('Error deleting form. Please try again later.');
+          });
+      }
+      
+      // Delete submission
+      function deleteSubmission(submissionId) {
+        fetch(`/api/submissions/${submissionId}`, { method: 'DELETE' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Submission deleted successfully.');
+              loadSubmissions();
+            } else {
+              alert('Error deleting submission: ' + (data.message || 'Unknown error'));
+            }
+          })
+          .catch(error => {
+            console.error('Error deleting submission:', error);
+            alert('Error deleting submission. Please try again later.');
+          });
+      }
+      
+      // Close modal event listeners
+      document.getElementById('close-form-modal').addEventListener('click', function() {
+        document.getElementById('form-modal').style.display = 'none';
+      });
+      
+      document.getElementById('close-submission-modal').addEventListener('click', function() {
+        document.getElementById('submission-modal').style.display = 'none';
+      });
+      
+      // Click outside modal to close
+      window.addEventListener('click', function(event) {
+        if (event.target === document.getElementById('form-modal')) {
+          document.getElementById('form-modal').style.display = 'none';
+        }
+        if (event.target === document.getElementById('submission-modal')) {
+          document.getElementById('submission-modal').style.display = 'none';
+        }
+      });
+      
+      // Refresh button event listener
+      document.getElementById('refresh-btn').addEventListener('click', function() {
+        const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+        if (activeTab === 'forms') {
+          loadForms();
+        } else if (activeTab === 'submissions') {
+          loadSubmissions();
+        }
+      });
+      
+      // Create form button event listeners
+      document.getElementById('create-form-btn').addEventListener('click', function() {
+        window.location.href = '/form-builder.html';
+      });
+      
+      document.getElementById('create-first-form-btn').addEventListener('click', function() {
+        window.location.href = '/form-builder.html';
+      });
+      
+      // Load forms by default
+      loadForms();
+    });
+  </script>
+</body>
+</html>
