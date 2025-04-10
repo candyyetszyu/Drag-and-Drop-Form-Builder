@@ -116,15 +116,6 @@ async function initializeDatabase() {
         
         console.log(`Found ${tables.length} tables in database`);
         
-        const requiredTables = ['forms', 'form_submissions'];
-        const missingTables = requiredTables.filter(
-          table => !tables.some(t => t.table_name === table)
-        );
-        
-        if (missingTables.length > 0) {
-          console.log(`⚠️ Missing tables: ${missingTables.join(', ')}`);
-          console.log('Run database initialization script: npm run init-db');
-        }
       } catch (error) {
         console.error('Error checking database tables:', error.message);
       }

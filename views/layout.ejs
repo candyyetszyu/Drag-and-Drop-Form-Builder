@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+</head>
+<body>
+  <% if (typeof description !== 'undefined') { %>
+    <h3><%= description %></h3>
+  <% } else { %>
+    <h3>Backend server is running. API endpoints available:</h3>
+  <% } %>
+</body>
+</html>
