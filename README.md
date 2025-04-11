@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Marketing Campaign Form Builder
+=======
+# Marketing Campaign Drag-and-Drop Form Builder
+>>>>>>> 09f0d1c98660333a546d8e4fbbd4402ff90aa405
 
 A full-stack application for creating, managing and analyzing marketing campaigns with dynamic form creation capabilities.
 
@@ -140,9 +144,12 @@ This domain model illustrates the relationships between the main entities in the
 │   ├── initialize.sql            # Database schema
 │   ├── init-db.js                # DB initialization script
 │   └── modules/                  # SQL modules
+<<<<<<< HEAD
 │       ├── ID01_Forms.sql        # Forms table definition
 │       ├── ID02_Fields.sql       # Fields table definition
 │       └── ID08_File_Uploads.sql # File uploads table definition
+=======
+>>>>>>> 09f0d1c98660333a546d8e4fbbd4402ff90aa405
 ├── scripts/                      # Utility scripts
 │   └── test-db-connection.js     # Database connection tester
 ├── .env                          # Environment variables
@@ -189,6 +196,9 @@ npm start
 ```
 
 Frontend will be available at: http://localhost:3000
+
+## Demo Video
+[Link 🔗] https://drive.google.com/file/d/1E-433FvlzgBVwImB3RjZDPAKB1hzCDJ0/view?usp=sharing
 
 ## Database Setup
 
@@ -273,6 +283,38 @@ The admin dashboard at http://localhost:3001/admin gives you access to:
 - Preview form layouts
 - Add and modify form fields
 
+## Contributing
+
+We welcome contributions to improve the Marketing Campaign Form Builder! Here's how you can contribute:
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** to your local machine
+   ```bash
+   git clone https://github.com/yourusername/marketing-campaign.git
+   cd marketing-campaign
+   ```
+3. **Create a new branch** for your feature or bugfix
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. **Make your changes** and commit them with descriptive messages
+   ```bash
+   git commit -m "Add feature: description of your changes"
+   ```
+5. **Push to your fork**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+6. **Submit a pull request** to the main repository
+
+### Contribution Guidelines
+
+- Follow the existing code style and conventions
+- Write clear, descriptive commit messages
+- Include tests for new features
+- Update documentation for any API changes
+- Keep pull requests focused on a single feature or bugfix
+- 
 ## Extending the Application
 
 ### Adding a New Field Type
@@ -592,6 +634,7 @@ const themes = {
   }
   ```
 
+<<<<<<< HEAD
 ## API Endpoints Guide
 
 Below are instructions for testing the API endpoints using terminal commands:
@@ -687,11 +730,14 @@ We welcome contributions to improve the Marketing Campaign Form Builder! Here's 
 - Update documentation for any API changes
 - Keep pull requests focused on a single feature or bugfix
 
+=======
+>>>>>>> 09f0d1c98660333a546d8e4fbbd4402ff90aa405
 ## Acknowledgements
 
 This project was developed with assistance from:
 
 - **Claude 3.7 Sonnet** - Helped with code implementation and debugging
 - **ChatGPT-4o** - Assisted in project design and architecture
+- **Deepseek v3** - Assisted in project design and architecture
 
 We also want to thank the open-source community for the various libraries and frameworks that made this project possible.

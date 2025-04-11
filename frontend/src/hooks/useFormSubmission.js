@@ -16,25 +16,41 @@ export const useFormSubmission = () => {
       setError(null);
       console.log(`Submitting form ${formId} with data:`, formData);
 
+      // Extract and handle validation code if present
+      const validationCode = formData._validationCode;
+      const dataToSubmit = { ...formData };
+      
+      // Remove internal fields that shouldn't be submitted
+      delete dataToSubmit._formId;
+      delete dataToSubmit._submittedAt;
+      delete dataToSubmit._validationCode;
+      
+      // Check if we need to validate
+      if (validationCode) {
+        // This might be handled differently depending on your requirements
+        // For example, prompt the user for a code or validate against a stored code
+        console.log('Form requires validation code:', validationCode);
+      }
+
       // Check if there are files to upload
       const filesData = {};
-      const hasFiles = Object.keys(formData).some(key => 
-        formData[key] instanceof File || 
-        (Array.isArray(formData[key]) && formData[key].some(item => item instanceof File))
+      const hasFiles = Object.keys(dataToSubmit).some(key => 
+        dataToSubmit[key] instanceof File || 
+        (Array.isArray(dataToSubmit[key]) && dataToSubmit[key].some(item => item instanceof File))
       );
       
       // If there are files, handle them first
       if (hasFiles) {
-        await uploadFormFiles(formId, formData, filesData);
+        await uploadFormFiles(formId, dataToSubmit, filesData);
         
         // Replace file objects with file references in the formData
         Object.keys(filesData).forEach(fieldId => {
-          formData[fieldId] = filesData[fieldId];
+          dataToSubmit[fieldId] = filesData[fieldId];
         });
       }
 
       // Use apiUtils to submit the form to the correct endpoint
-      const response = await apiUtils.post(`/forms/${formId}/submit`, formData);
+      const response = await apiUtils.post(`/forms/${formId}/submit`, dataToSubmit);
       
       if (response.success) {
         setSubmitted(true);

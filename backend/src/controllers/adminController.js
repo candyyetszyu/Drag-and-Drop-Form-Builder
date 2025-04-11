@@ -23,9 +23,53 @@ const isDbConnected = () => {
 const getAllForms = async () => {
   if (isDbConnected()) {
     try {
-      const [rows] = await pool.query(
-        'SELECT id, title, description, created_at FROM forms ORDER BY created_at DESC'
-      );
+      // Check if submission_count and status columns exist
+      const [columns] = await pool.query(`
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'forms' 
+        AND COLUMN_NAME IN ('submission_count', 'status', 'share_url')
+      `);
+      
+      const hasSubmissionCount = columns.some(col => col.COLUMN_NAME === 'submission_count');
+      const hasStatus = columns.some(col => col.COLUMN_NAME === 'status');
+      const hasShareUrl = columns.some(col => col.COLUMN_NAME === 'share_url');
+      
+      // Build the query based on existing columns
+      let query = 'SELECT id, title, description, created_at';
+      if (hasSubmissionCount) query += ', submission_count';
+      if (hasStatus) query += ', status';
+      if (hasShareUrl) query += ', share_url';
+      query += ' FROM forms ORDER BY created_at DESC';
+      
+      const [rows] = await pool.query(query);
+      
+      // If missing any columns, add default values
+      for (const row of rows) {
+        if (!hasSubmissionCount) {
+          // Calculate submission count if needed
+          try {
+            const [countResult] = await pool.query(
+              'SELECT COUNT(*) as count FROM form_submissions WHERE form_id = ?',
+              [row.id]
+            );
+            row.submission_count = countResult[0].count;
+          } catch (countError) {
+            console.error('Error calculating submission count:', countError);
+            row.submission_count = 0;
+          }
+        }
+        
+        if (!hasStatus) {
+          row.status = 'active'; // Default status
+        }
+        
+        if (!hasShareUrl) {
+          row.share_url = `${process.env.APP_URL || 'http://localhost:3001'}/form/${row.id}`;
+        }
+      }
+      
       return rows;
     } catch (error) {
       console.error('Error fetching forms from database:', error);
@@ -38,7 +82,10 @@ const getAllForms = async () => {
     id: form.id,
     title: form.title,
     description: form.description,
-    created_at: form.created_at
+    created_at: form.created_at,
+    status: form.status || 'active',
+    submission_count: form.submission_count || 0,
+    share_url: form.share_url || `${process.env.APP_URL || 'http://localhost:3001'}/form/${form.id}`
   }));
 };
 
@@ -46,10 +93,27 @@ const getAllForms = async () => {
 const getFormById = async (id) => {
   if (isDbConnected()) {
     try {
-      const [rows] = await pool.query(
-        'SELECT id, title, description, fields, created_at FROM forms WHERE id = ?',
-        [id]
-      );
+      // Check if submission_count, status, and share_url columns exist
+      const [columns] = await pool.query(`
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'forms' 
+        AND COLUMN_NAME IN ('submission_count', 'status', 'share_url')
+      `);
+      
+      const hasSubmissionCount = columns.some(col => col.COLUMN_NAME === 'submission_count');
+      const hasStatus = columns.some(col => col.COLUMN_NAME === 'status');
+      const hasShareUrl = columns.some(col => col.COLUMN_NAME === 'share_url');
+      
+      // Build the query based on existing columns
+      let query = 'SELECT id, title, description, fields, created_at';
+      if (hasSubmissionCount) query += ', submission_count';
+      if (hasStatus) query += ', status';
+      if (hasShareUrl) query += ', share_url';
+      query += ' FROM forms WHERE id = ?';
+      
+      const [rows] = await pool.query(query, [id]);
       
       if (rows.length === 0) {
         return null;
@@ -59,7 +123,35 @@ const getFormById = async (id) => {
       
       // Parse JSON fields if needed
       if (typeof form.fields === 'string') {
-        form.fields = JSON.parse(form.fields);
+        try {
+          form.fields = JSON.parse(form.fields);
+        } catch (e) {
+          console.error('Error parsing form fields JSON:', e);
+          form.fields = []; // Default to empty array if parsing fails
+        }
+      }
+      
+      // Add missing properties with default values
+      if (!hasSubmissionCount) {
+        try {
+          const [countResult] = await pool.query(
+            'SELECT COUNT(*) as count FROM form_submissions WHERE form_id = ?',
+            [id]
+          );
+          form.submission_count = countResult[0].count;
+        } catch (countError) {
+          console.error('Error calculating submission count:', countError);
+          form.submission_count = 0;
+        }
+      }
+      
+      if (!hasStatus) {
+        form.status = 'active';
+      }
+      
+      if (!hasShareUrl) {
+        // Generate a default share URL
+        form.share_url = `${process.env.APP_URL || 'http://localhost:3001'}/form/${id}`;
       }
       
       return form;
@@ -70,7 +162,19 @@ const getFormById = async (id) => {
   }
   
   // Return from in-memory storage
-  return inMemoryStorage.forms.find(form => form.id === id);
+  const form = inMemoryStorage.forms.find(form => form.id === id);
+  if (form) {
+    // Add status if it doesn't exist
+    if (!form.status) {
+      form.status = 'active'; 
+    }
+    
+    // Add submission_count if it doesn't exist
+    if (!form.submission_count) {
+      form.submission_count = inMemoryStorage.submissions.filter(s => s.formId === id).length;
+    }
+  }
+  return form;
 };
 
 // Get all submissions

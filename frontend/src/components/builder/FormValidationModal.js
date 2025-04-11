@@ -26,14 +26,6 @@ const FormValidationModal = ({ isOpen, onClose, formData, onSave }) => {
   };
   
   const handleSave = () => {
-    if (!testResult || !testResult.passed) {
-      const confirmed = window.confirm(
-        'You have not successfully tested the validation code. Are you sure you want to save anyway?'
-      );
-      
-      if (!confirmed) return;
-    }
-    
     // Add validation code to form data
     const updatedFormData = {
       ...formData,

@@ -114,12 +114,56 @@ const FormBuilderPage = () => {
     try {
       console.log("Saving form:", formDataWithValidation);
       
-      const result = await post('/forms', formDataWithValidation);
+      // Extract the fields and other form data from the validated form
+      const dataToSave = {
+        title: formValues.title,
+        description: formValues.description || '',
+        fields: fields.map(field => {
+          // Clone the field to avoid modifying the original
+          const fieldToSave = { ...field };
+          // Remove any runtime-only properties that shouldn't be saved
+          delete fieldToSave.value;
+          return fieldToSave;
+        }),
+        // Include the validation code if it exists
+        ...(formDataWithValidation.validationCode && { 
+          validationCode: formDataWithValidation.validationCode 
+        })
+      };
+      
+      const result = await post('/forms', dataToSave);
       setShowValidationModal(false);
-      alert('Form saved successfully!');
+      
+      if (result.success) {
+        // If we have a new form ID, use it
+        if (result.formId) {
+          console.log("Form saved with ID:", result.formId);
+          
+          // Display success message with share URL if available
+          let message = 'Form saved successfully!';
+          if (result.shareUrl) {
+            message += `\n\nShare URL: ${result.shareUrl}`;
+            
+            // Copy URL to clipboard if supported
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(result.shareUrl)
+                .then(() => console.log('URL copied to clipboard'))
+                .catch(err => console.error('Failed to copy URL: ', err));
+            }
+          }
+          
+          alert(message);
+        } else {
+          alert('Form saved successfully!');
+        }
+      } else {
+        alert(`Error: ${result.error || 'Unknown error occurred'}`);
+      }
+      
       return result;
     } catch (err) {
       console.error('Error saving form:', err);
+      alert('Failed to save the form. Please try again.');
     }
   };
 

@@ -5,6 +5,8 @@ const fs = require('fs');
 const mysql = require('mysql2/promise');
 // Add dotenv for environment variable loading
 const dotenv = require('dotenv');
+// Add DB upgrade import at the top with other imports
+const { upgradeDatabase } = require('./dbUpgrade');
 
 // Load environment variables from .env files
 dotenv.config({ path: path.resolve(__dirname, '../../.env') }); // Root .env file
@@ -121,9 +123,23 @@ async function initializeDatabase() {
     if (rows && rows[0].connection_test === 1) {
       console.log('✅ MySQL database connected successfully');
       dbConnected = true;
-      
-      // Set the database pool in the admin controller
-      adminController.setDbPool(pool);
+
+      console.log('Connected to MySQL database. Testing connection...');
+      try {
+        const [rows] = await pool.query('SELECT 1');
+        console.log('Database connection successful.');
+        
+        // Upgrade database schema if needed
+        await upgradeDatabase(pool);
+        
+        // Set the database pool for admin controller
+        adminController.setDbPool(pool);
+      } catch (error) {
+        console.error('Error testing database connection:', error);
+        dbConnected = false;
+        pool = null;
+      }
+
       console.log('Admin controller database pool set successfully');
       // Check if tables exist
       try {
@@ -233,22 +249,57 @@ app.get('/api/forms/:id', async (req, res) => {
     const { id } = req.params;
     
     if (dbConnected && pool) {
-      const [rows] = await pool.query(
-        'SELECT id, title, description, fields, created_at, submission_count FROM forms WHERE id = ?',
-        [id]
-      );
-      
-      if (rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'Form not found'
+      try {
+        // First check if submission_count column exists
+        const [columns] = await pool.query(`
+          SELECT COLUMN_NAME 
+          FROM INFORMATION_SCHEMA.COLUMNS 
+          WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = 'forms' 
+          AND COLUMN_NAME = 'submission_count'
+        `);
+        
+        let query;
+        if (columns.length > 0) {
+          // If submission_count exists, include it
+          query = 'SELECT id, title, description, fields, created_at, submission_count FROM forms WHERE id = ?';
+        } else {
+          // Otherwise use a query without submission_count
+          query = 'SELECT id, title, description, fields, created_at FROM forms WHERE id = ?';
+        }
+        
+        const [rows] = await pool.query(query, [id]);
+        
+        if (rows.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Form not found'
+          });
+        }
+        
+        // If submission_count doesn't exist in the database, compute it
+        if (!columns.length) {
+          // Calculate submission count from submissions table
+          try {
+            const [countResult] = await pool.query(
+              'SELECT COUNT(*) as count FROM form_submissions WHERE form_id = ?',
+              [id]
+            );
+            rows[0].submission_count = countResult[0].count;
+          } catch (countError) {
+            console.error('Error calculating submission count:', countError);
+            rows[0].submission_count = 0;
+          }
+        }
+        
+        return res.json({
+          success: true,
+          form: rows[0]
         });
+      } catch (dbError) {
+        console.error('Database error fetching form:', dbError);
+        // Fall back to other storage options
       }
-      
-      return res.json({
-        success: true,
-        form: rows[0]
-      });
     } else if (fileStorageEnabled) {
       const form = await fileStorage.getFormById(id);
       
@@ -307,32 +358,51 @@ app.post('/api/forms', async (req, res) => {
           [title, description, JSON.stringify(fields)]
         );
         
+        const formId = result.insertId;
+        const shareUrl = `${req.protocol}://${req.get('host')}/form/${formId}`;
+        
+        // Update the form with the share URL
+        await pool.query(
+          'UPDATE forms SET share_url = ? WHERE id = ?',
+          [shareUrl, formId]
+        );
+        
         return res.status(201).json({
           success: true,
           message: 'Form created successfully',
-          formId: result.insertId
+          formId: formId,
+          shareUrl: shareUrl
         });
       } catch (dbError) {
         console.error('Database error creating form:', dbError);
-        // Continue with file storage fallback
+        // Fall back to other storage options
       }
-    }
+    } else if (fileStorageEnabled) {
+      try {
+        const newForm = await fileStorage.createForm({
+          title,
+          description, 
+          fields
+        });
+        
+        const shareUrl = `${req.protocol}://${req.get('host')}/form/${newForm.id}`;
+        newForm.share_url = shareUrl;
+        
+        await fileStorage.updateForm(newForm.id, newForm);
+        
+        return res.status(201).json({
+          success: true,
+          message: 'Form created successfully (file storage)',
+          formId: newForm.id,
+          shareUrl: shareUrl
+        });
+      } catch (fileError) {
+        console.error('File storage error creating form:', fileError);
+        // Fall back to in-memory storage
+      }
+    } 
     
-    if (fileStorageEnabled) {
-      const newForm = await fileStorage.createForm({
-        title, 
-        description, 
-        fields
-      });
-      
-      return res.status(201).json({
-        success: true,
-        message: 'Form created successfully (file storage)',
-        formId: newForm.id
-      });
-    }
-    
-    // Fallback to in-memory storage
+    // Default to in-memory storage
     const formId = Date.now().toString();
     const newForm = {
       id: formId,
@@ -342,12 +412,15 @@ app.post('/api/forms', async (req, res) => {
       created_at: new Date().toISOString()
     };
     
-    inMemoryStorage.forms.push(newForm);
+    const shareUrl = `${req.protocol}://${req.get('host')}/form/${formId}`;
+    newForm.share_url = shareUrl;
     
+    inMemoryStorage.forms.push(newForm);
     res.status(201).json({
       success: true,
       message: 'Form created successfully (in-memory)',
-      formId
+      formId,
+      shareUrl
     });
   } catch (error) {
     console.error('Error creating form:', error);
@@ -358,7 +431,7 @@ app.post('/api/forms', async (req, res) => {
   }
 });
 
-// API to submit a form - enhanced to ensure MySQL connection
+// API to submit a form - enhanced to handle form status
 app.post('/api/forms/:id/submit', async (req, res) => {
   try {
     const { id } = req.params;
@@ -368,21 +441,40 @@ app.post('/api/forms/:id/submit', async (req, res) => {
     console.log(`Attempting to submit form ${id} with data:`, JSON.stringify(formData, null, 2));
     
     let formExists = false;
+    let formDisabled = false;
     
-    // Check if form exists
+    // Check if form exists and is active
     if (dbConnected && pool) {
-      const [rows] = await pool.query('SELECT id FROM forms WHERE id = ?', [id]);
+      const [rows] = await pool.query('SELECT id, status FROM forms WHERE id = ?', [id]);
       formExists = rows.length > 0;
-      
-      if (!formExists) {
-        return res.status(404).json({
-          success: false,
-          message: 'Form not found'
-        });
-      }
-      
+      formDisabled = formExists && rows[0].status === 'disabled';
+    } else if (fileStorageEnabled) {
+      const form = await fileStorage.getFormById(id);
+      formExists = !!form;
+      formDisabled = formExists && form.status === 'disabled';
+    } else {
+      const form = inMemoryStorage.forms.find(form => form.id === id);
+      formExists = !!form;
+      formDisabled = formExists && form.status === 'disabled';
+    }
+    
+    if (!formExists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+    
+    if (formDisabled) {
+      return res.status(403).json({
+        success: false,
+        message: 'This form is currently disabled and not accepting submissions'
+      });
+    }
+    
+    // Continue with form submission for active forms
+    if (dbConnected && pool) {
       try {
-        // Insert submission into MySQL
         const [result] = await pool.query(
           'INSERT INTO form_submissions (form_id, response_data, submitted_at) VALUES (?, ?, NOW())',
           [id, JSON.stringify(formData)]
@@ -406,30 +498,13 @@ app.post('/api/forms/:id/submit', async (req, res) => {
         // Fall through to fallback options
       }
     } else if (fileStorageEnabled && fileStorage) {
-      const form = await fileStorage.getFormById(id);
-      if (!form) {
-        return res.status(404).json({
-          success: false,
-          message: 'Form not found'
-        });
-      }
-      
       const submission = await fileStorage.createSubmission(id, formData);
-      
       return res.status(201).json({
         success: true,
         message: 'Form submitted successfully (file storage)',
         submissionId: submission.id
       });
     } else {
-      const form = inMemoryStorage.forms.find(form => form.id === id);
-      if (!form) {
-        return res.status(404).json({
-          success: false,
-          message: 'Form not found'
-        });
-      }
-      
       const submissionId = Date.now().toString();
       const submission = {
         id: submissionId,
@@ -437,9 +512,7 @@ app.post('/api/forms/:id/submit', async (req, res) => {
         data: formData,
         submitted_at: new Date().toISOString()
       };
-      
       inMemoryStorage.submissions.push(submission);
-      
       res.status(201).json({
         success: true,
         message: 'Form submitted successfully',
@@ -458,7 +531,6 @@ app.post('/api/forms/:id/submit', async (req, res) => {
 // API to get submissions for a form
 app.get('/api/forms/:id/submissions', async (req, res) => {
   const { id } = req.params;
-  
   try {
     if (dbConnected && pool) {
       const [rows] = await pool.query(
@@ -497,6 +569,98 @@ app.use('/admin/styles', express.static(path.join(__dirname, '../public/styles')
 // Serve the admin dashboard
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin/dashboard.html'));
+});
+
+// API endpoint to update a form's status
+app.patch('/api/forms/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status || !['active', 'disabled'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be "active" or "disabled"'
+      });
+    }
+    
+    let updated = false;
+    
+    if (dbConnected && pool) {
+      try {
+        // First check if status column exists
+        const [columns] = await pool.query(`
+          SELECT COLUMN_NAME 
+          FROM INFORMATION_SCHEMA.COLUMNS 
+          WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = 'forms' 
+          AND COLUMN_NAME = 'status'
+        `);
+        
+        if (columns.length > 0) {
+          // If status column exists, update it
+          const [result] = await pool.query(
+            'UPDATE forms SET status = ? WHERE id = ?',
+            [status, id]
+          );
+          updated = result.affectedRows > 0;
+        } else {
+          // If status column doesn't exist, need to add it first
+          await pool.query(`
+            ALTER TABLE forms 
+            ADD COLUMN status ENUM('active', 'disabled') DEFAULT 'active'
+          `);
+          
+          // Then update the status
+          const [result] = await pool.query(
+            'UPDATE forms SET status = ? WHERE id = ?',
+            [status, id]
+          );
+          updated = result.affectedRows > 0;
+        }
+      } catch (dbError) {
+        console.error('Database error updating form status:', dbError);
+        // Fall through to other storage options
+      }
+    } else if (fileStorageEnabled) {
+      try {
+        const form = await fileStorage.getFormById(id);
+        if (form) {
+          form.status = status;
+          await fileStorage.updateForm(id, form);
+          updated = true;
+        }
+      } catch (fileError) {
+        console.error('File storage error updating form status:', fileError);
+      }
+    } else {
+      // Update in-memory storage
+      const formIndex = inMemoryStorage.forms.findIndex(f => f.id === id);
+      if (formIndex !== -1) {
+        inMemoryStorage.forms[formIndex].status = status;
+        updated = true;
+      }
+    }
+    
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Form not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `Form status updated to ${status}`,
+      status
+    });
+  } catch (error) {
+    console.error('Error updating form status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update form status'
+    });
+  }
 });
 
 // API endpoint for admin to get all forms
@@ -660,9 +824,7 @@ if (fs.existsSync(buildPath)) {
         <body>
           <h1>Marketing Campaign API</h1>
           <p>Backend server is running. All API endpoints available:</p>
-          
           <h2 class="section-title">Form Management</h2>
-          
           <div class="endpoint">
             <span class="method get">GET</span>
             <strong>/api/health</strong>
@@ -690,7 +852,7 @@ if (fs.existsSync(buildPath)) {
             <p>Create a new form</p>
             <pre>
 // Example request body:
-{
+{         
   "title": "New Customer Survey",
   "description": "Tell us about your experience",
   "fields": [
@@ -704,7 +866,7 @@ if (fs.existsSync(buildPath)) {
 }
             </pre>
           </div>
-
+          
           <div class="endpoint">
             <span class="method put">PUT</span>
             <strong>/api/forms/:id</strong>
@@ -725,22 +887,20 @@ if (fs.existsSync(buildPath)) {
 }
             </pre>
           </div>
-
+          
           <div class="endpoint">
             <span class="method delete">DELETE</span>
             <strong>/api/forms/:id</strong>
             <p>Delete a form</p>
           </div>
-          
           <h2 class="section-title">Form Submissions</h2>
-          
           <div class="endpoint">
             <span class="method post">POST</span>
             <strong>/api/forms/:id/submit</strong>
             <p>Submit responses to a form</p>
             <pre>
 // Example request body:
-{
+{         
   "name": "John Doe",
   "email": "john@example.com",
   "rating": "5",
@@ -748,7 +908,7 @@ if (fs.existsSync(buildPath)) {
 }
             </pre>
           </div>
-
+          
           <div class="endpoint">
             <span class="method get">GET</span>
             <strong>/api/forms/:id/submissions</strong>
@@ -757,7 +917,6 @@ if (fs.existsSync(buildPath)) {
           </div>
 
           <h2 class="section-title">File Upload</h2>
-          
           <div class="endpoint">
             <span class="method post">POST</span>
             <strong>/api/upload</strong>
@@ -769,7 +928,7 @@ if (fs.existsSync(buildPath)) {
 - fieldId: ID of the field the file belongs to (optional)
             </pre>
           </div>
-
+          
           <div class="endpoint">
             <span class="method get">GET</span>
             <strong>/api/files/:formId</strong>
@@ -778,7 +937,6 @@ if (fs.existsSync(buildPath)) {
           </div>
 
           <h2 class="section-title">Admin</h2>
-          
           <div class="endpoint">
             <span class="method get">GET</span>
             <strong>/api/admin/forms</strong>
@@ -818,16 +976,13 @@ if (fs.existsSync(buildPath)) {
             <strong>/api/admin/submissions/:id</strong>
             <p>Delete a submission (admin)</p>
           </div>
-          
           <p>To run the frontend separately:</p>
           <pre>cd frontend && npm start</pre>
-
           <p>Admin Dashboard: <a href="/admin" target="_blank">/admin</a></p>
         </body>
       </html>
-    `);
+    `);   
   });
-  
   console.log('Frontend build not found. Serving API documentation page.');
 }
 
@@ -835,22 +990,249 @@ if (fs.existsSync(buildPath)) {
 app.get('/form/:id', (req, res) => {
   const formId = req.params.id;
   
-  // Check if form exists (optional verification step)
+  // Check if form exists and is active
   const checkForm = async () => {
-    if (dbConnected && pool) {
-      try {
-        const [rows] = await pool.query('SELECT id FROM forms WHERE id = ?', [formId]);
-        if (rows.length === 0) {
-          return res.status(404).send('Form not found');
-        }
-      } catch (error) {
-        console.error('Error checking form existence:', error);
-        // Continue anyway to avoid blocking access
+    try {
+      let formExists = false;
+      let formDisabled = false;
+      
+      if (dbConnected && pool) {
+        const [rows] = await pool.query('SELECT id, status FROM forms WHERE id = ?', [formId]);
+        formExists = rows.length > 0;
+        formDisabled = formExists && rows[0].status === 'disabled';
+      } else if (fileStorageEnabled) {
+        const form = await fileStorage.getFormById(formId);
+        formExists = !!form;
+        formDisabled = formExists && form.status === 'disabled';
+      } else {
+        const form = inMemoryStorage.forms.find(form => form.id === formId);
+        formExists = !!form;
+        formDisabled = formExists && form.status === 'disabled';
       }
+      
+      if (!formExists) {
+        return res.status(404).send(`
+          <html>
+            <head>
+              <title>Form Not Found</title>
+              <style>
+                body { font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; text-align: center; }
+                h1 { color: #ef4444; }
+                .btn { display: inline-block; padding: 0.5rem 1rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 0.25rem; margin-top: 1rem; }
+              </style>
+            </head>
+            <body>
+              <h1>Form Not Found</h1>
+              <p>The form you're looking for doesn't exist or has been deleted.</p>
+              <a href="/" class="btn">Back to Home</a>
+            </body>
+          </html>
+        `);
+      }
+      
+      if (formDisabled) {
+        return res.status(403).send(`
+          <html>
+            <head>
+              <title>Form Disabled</title>
+              <style>
+                body { font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; text-align: center; }
+                h1 { color: #f59e0b; }
+                .btn { display: inline-block; padding: 0.5rem 1rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 0.25rem; margin-top: 1rem; }
+              </style>
+            </head>
+            <body>
+              <h1>Form Disabled</h1>
+              <p>This form is currently not accepting submissions. Please contact the form administrator for more information.</p>
+              <a href="/" class="btn">Back to Home</a>
+            </body>
+          </html>
+        `);
+      }
+      
+      // Serve the form viewer HTML with the form ID embedded for client-side fetching
+      res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Form Viewer</title>
+          <link rel="stylesheet" href="/styles/base.css">
+          <style>
+            body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+            .container { background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h1 { margin-top: 0; color: #2563eb; }
+            .form-field { margin-bottom: 1.5rem; }
+            label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
+            input, textarea, select { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; }
+            button { background: #2563eb; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer; }
+            .error { color: #ef4444; margin-top: 0.25rem; font-size: 0.875rem; }
+            .success { background: #d1fae5; color: #065f46; padding: 1rem; border-radius: 0.375rem; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div id="form-container" data-form-id="${formId}">
+              <h1>Loading form...</h1>
+              <p>Please wait while we load the form...</p>
+            </div>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const formContainer = document.getElementById('form-container');
+              const formId = formContainer.getAttribute('data-form-id');
+              
+              // Fetch the form data
+              fetch('/api/forms/' + formId)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.success && data.form) {
+                    renderForm(data.form);
+                  } else {
+                    formContainer.innerHTML = '<h1>Error</h1><p>Could not load form. Please try again later.</p>';
+                  }
+                })
+                .catch(error => {
+                  console.error('Error loading form:', error);
+                  formContainer.innerHTML = '<h1>Error</h1><p>Could not load form. Please try again later.</p>';
+                });
+              
+              // Render the form 
+              function renderForm(form) {
+                let formHTML = \`
+                  <h1>\${form.title || 'Untitled Form'}</h1>
+                  \${form.description ? '<p>' + form.description + '</p>' : ''}
+                  <form id="dynamic-form" onsubmit="handleSubmit(event)">
+                \`;
+                
+                // Render each field
+                if (form.fields && Array.isArray(form.fields)) {
+                  form.fields.forEach(field => {
+                    formHTML += \`<div class="form-field">\`;
+                    
+                    // Label with required indicator
+                    formHTML += \`<label for="\${field.id}">\${field.question || field.label}\${field.isRequired ? ' *' : ''}</label>\`;
+                    
+                    // Render different field types
+                    switch(field.type) {
+                      case 'text':
+                        formHTML += \`<input type="text" id="\${field.id}" name="\${field.id}" \${field.isRequired ? 'required' : ''}>\`;
+                        break;
+                      case 'dropdown':
+                        formHTML += \`<select id="\${field.id}" name="\${field.id}" \${field.isRequired ? 'required' : ''}>\`;
+                        formHTML += \`<option value="">-- Select an option --</option>\`;
+                        if (field.options && Array.isArray(field.options)) {
+                          field.options.forEach(option => {
+                            formHTML += \`<option value="\${option.value}">\${option.label}</option>\`;
+                          });
+                        }
+                        formHTML += \`</select>\`;
+                        break;
+                      case 'table':
+                        // Simple text implementation for tables
+                        formHTML += \`<textarea id="\${field.id}" name="\${field.id}" rows="4" \${field.isRequired ? 'required' : ''}></textarea>\`;
+                        formHTML += \`<p><small>Please enter data in a structured format.</small></p>\`;
+                        break;
+                      case 'file':
+                        formHTML += \`<input type="file" id="\${field.id}" name="\${field.id}" \${field.isRequired ? 'required' : ''}>\`;
+                        break;
+                      default:
+                        formHTML += \`<input type="text" id="\${field.id}" name="\${field.id}" \${field.isRequired ? 'required' : ''}>\`;
+                    }
+                    
+                    formHTML += \`<div class="error" id="\${field.id}-error"></div>\`;
+                    formHTML += \`</div>\`;
+                  });
+                }
+                
+                // If the form has a validation code, add a field for it
+                if (form.validationCode) {
+                  formHTML += \`
+                    <div class="form-field validation-code-section">
+                      <label for="validationCode">Validation Code *</label>
+                      <input type="password" id="validationCode" name="_validationCode" required>
+                      <div class="helper-text">This form requires a validation code to submit.</div>
+                    </div>
+                  \`;
+                }
+                
+                formHTML += \`
+                  <button type="submit">Submit Form</button>
+                  </form>
+                  <div id="form-result" style="display: none; margin-top: 1.5rem;"></div>
+                \`;
+                
+                formContainer.innerHTML = formHTML;
+              }
+              
+              // Make the handleSubmit function global so the form can access it
+              window.handleSubmit = function(event) {
+                event.preventDefault();
+                
+                const form = event.target;
+                const formData = new FormData(form);
+                const jsonData = {};
+                
+                // Convert FormData to JSON
+                formData.forEach((value, key) => {
+                  jsonData[key] = value;
+                });
+                
+                // Check validation code if present
+                const validationCode = jsonData._validationCode;
+                const formValidationCode = form.dataset.validationCode;
+                
+                if (formValidationCode && validationCode !== formValidationCode) {
+                  const resultDiv = document.getElementById('form-result');
+                  resultDiv.className = 'error';
+                  resultDiv.innerHTML = \`<p>Error: Invalid validation code</p>\`;
+                  resultDiv.style.display = 'block';
+                  return;
+                }
+                
+                // Submit the form
+                fetch('/api/forms/' + formId + '/submit', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(jsonData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                  const resultDiv = document.getElementById('form-result');
+                  if (data.success) {
+                    form.style.display = 'none';
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = \`
+                      <h2>Thank You!</h2>
+                      <p>Your response has been submitted successfully.</p>
+                      <button onclick="location.reload()">Submit Another Response</button>
+                    \`;
+                  } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = \`<p>Error: \${data.message || 'Could not submit form'}</p>\`;
+                  }
+                  resultDiv.style.display = 'block';
+                })
+                .catch(error => {
+                  console.error('Error submitting form:', error);
+                  const resultDiv = document.getElementById('form-result');
+                  resultDiv.className = 'error';
+                  resultDiv.innerHTML = '<p>Error: Could not submit form. Please try again.</p>';
+                  resultDiv.style.display = 'block';
+                });
+              };
+            });
+          </script>
+        </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error('Error checking form existence:', error);
+      res.status(500).send('Server error. Please try again later.');
     }
-    
-    // Serve the form viewer HTML
-    res.sendFile(path.join(__dirname, '../public/form-viewer.html'));
   };
   
   checkForm();
@@ -900,7 +1282,10 @@ const startServer = async () => {
       await new Promise((resolve, reject) => {
         server.on('error', (err) => {
           if (err.code === 'EADDRINUSE') {
-            server.close();
+            console.log(`⚠️ Port ${PORT} is already in use`);
+            console.log('Looking for an available port...');
+            serverPort = await findAvailablePort(PORT + 1);
+            console.log(`Found available port: ${serverPort}`);
             resolve(false);
           } else {
             reject(err);
@@ -923,7 +1308,6 @@ const startServer = async () => {
       }
     }
     
-    // Start the server on the selected port
     app.listen(serverPort, () => {
       console.log(`\n✅ Server running on http://localhost:${serverPort}`);
       console.log(`Database status: ${dbConnected ? 'Connected' : fileStorageEnabled ? 'File storage enabled' : 'Not connected (using in-memory storage)'}`);

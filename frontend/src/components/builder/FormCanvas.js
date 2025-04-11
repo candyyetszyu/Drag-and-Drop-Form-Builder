@@ -33,9 +33,6 @@ const FormCanvas = ({
   // Add state for URL notification
   const [showUrlNotification, setShowUrlNotification] = useState(false);
   
-  // Get base URL from window location
-  const baseUrl = window.location.origin;
-
   // Initialize field visibility when fields change
   useEffect(() => {
     const initialVisibility = {};
@@ -48,16 +45,23 @@ const FormCanvas = ({
   
   // Generate and set form URL when formId changes
   useEffect(() => {
-    if (formId) {
-      const url = `${baseUrl}/form/${formId}`;
-      setFormUrl(url);
-      
-      // Check if the form exists in the database
+    if (formId && formId !== 'preview') {  // Don't set URL for preview forms
+      // First try to get the URL from any previous save response
       const checkFormInDatabase = async () => {
         try {
           const response = await apiUtils.get(`/forms/${formId}`);
-          if (response.success) {
+          if (response.success && response.form) {
+            // Use the share_url from the API if available
+            if (response.form.share_url) {
+              setFormUrl(response.form.share_url);
+            } else {
+              // Fallback to constructed URL
+              const baseUrl = window.location.origin;
+              const url = `${baseUrl}/form/${formId}`;
+              setFormUrl(url);
+            }
             setShowUrlNotification(true);
+            
             // Hide notification after 10 seconds
             setTimeout(() => {
               setShowUrlNotification(false);
@@ -65,12 +69,16 @@ const FormCanvas = ({
           }
         } catch (error) {
           console.error('Error checking form:', error);
+          // Fallback to constructed URL
+          const baseUrl = window.location.origin;
+          const url = `${baseUrl}/form/${formId}`;
+          setFormUrl(url);
         }
       };
       
       checkFormInDatabase();
     }
-  }, [formId, baseUrl]);
+  }, [formId]);
 
   // Helper function to validate the form
   const validateForm = (fields, data) => {
