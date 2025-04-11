@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-# Marketing Campaign Form Builder
-=======
 # Marketing Campaign Drag-and-Drop Form Builder
->>>>>>> 09f0d1c98660333a546d8e4fbbd4402ff90aa405
+
 
 A full-stack application for creating, managing and analyzing marketing campaigns with dynamic form creation capabilities.
 
@@ -144,12 +141,9 @@ This domain model illustrates the relationships between the main entities in the
 │   ├── initialize.sql            # Database schema
 │   ├── init-db.js                # DB initialization script
 │   └── modules/                  # SQL modules
-<<<<<<< HEAD
 │       ├── ID01_Forms.sql        # Forms table definition
 │       ├── ID02_Fields.sql       # Fields table definition
 │       └── ID08_File_Uploads.sql # File uploads table definition
-=======
->>>>>>> 09f0d1c98660333a546d8e4fbbd4402ff90aa405
 ├── scripts/                      # Utility scripts
 │   └── test-db-connection.js     # Database connection tester
 ├── .env                          # Environment variables
@@ -634,7 +628,6 @@ const themes = {
   }
   ```
 
-<<<<<<< HEAD
 ## API Endpoints Guide
 
 Below are instructions for testing the API endpoints using terminal commands:
@@ -730,8 +723,6 @@ We welcome contributions to improve the Marketing Campaign Form Builder! Here's 
 - Update documentation for any API changes
 - Keep pull requests focused on a single feature or bugfix
 
-=======
->>>>>>> 09f0d1c98660333a546d8e4fbbd4402ff90aa405
 ## Acknowledgements
 
 This project was developed with assistance from:

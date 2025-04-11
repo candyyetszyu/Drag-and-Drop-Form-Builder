@@ -1247,30 +1247,51 @@ const findAvailablePort = async (startPort, maxTries = 10) => {
       const server = require('http').createServer();
       await new Promise((resolve, reject) => {
         server.on('error', (err) => {
-          if (err.code === 'EADDRINUSE') {
+        </body>
+        </html>eate a server on the port
+      `);uire('http').createServer();
+    } catch (error) { new Promise((resolve, reject) => {
+      console.error('Error checking form existence:', error);ver.on('error', (err) => {
+      res.status(500).send('Server error. Please try again later.');  if (err.code === 'EADDRINUSE') {
+    }
+  };);
+  
+  checkForm(); reject(err);
+}); }
+  });
+// Function to find an available port
+const findAvailablePort = async (startPort, maxTries = 10) => {en(port, () => {
+  for (let i = 0; i < maxTries; i++) {
+    const port = startPort + i;     resolve(true);
+    try {     });
+      // Try to create a server on the port    });
+      const server = require('http').createServer();
+      await new Promise((resolve, reject) => {    return port; // Port is available
+        server.on('error', (err) => {    } catch (err) {
+          if (err.code === 'EADDRINUSE') {`, err.message);
             server.close();
             resolve(false);
           } else {
-            reject(err);
+            reject(err);ot find an available port after ${maxTries} attempts`);
           }
         });
-        
+         detection
         server.listen(port, () => {
           server.close();
           resolve(true);
         });
       });
       
-      return port; // Port is available
-    } catch (err) {
-      console.error(`Error checking port ${port}:`, err.message);
-    }
-  }
+      return port; // Port is availablethe port is available
+    } catch (err) {uire('http').createServer();
+      console.error(`Error checking port ${port}:`, err.message); new Promise((resolve, reject) => {
+    }ver.on('error', (err) => {
+  }  if (err.code === 'EADDRINUSE') {
   
-  throw new Error(`Could not find an available port after ${maxTries} attempts`);
+  throw new Error(`Could not find an available port after ${maxTries} attempts`););
 };
-
-// Start the server with automatic port detection
+ reject(err);
+// Start the server with automatic port detection }
 const startServer = async () => {
   try {
     // Try to use the default port
@@ -1278,15 +1299,12 @@ const startServer = async () => {
     
     try {
       // Check if the port is available
-      const server = require('http').createServer();
-      await new Promise((resolve, reject) => {
-        server.on('error', (err) => {
-          if (err.code === 'EADDRINUSE') {
-            console.log(`⚠️ Port ${PORT} is already in use`);
-            console.log('Looking for an available port...');
-            serverPort = await findAvailablePort(PORT + 1);
-            console.log(`Found available port: ${serverPort}`);
-            resolve(false);
+      const server = require('http').createServer();{
+      await new Promise((resolve, reject) => {f (err.code === 'EADDRINUSE') {
+        server.on('error', (err) => {   console.log(`⚠️ Port ${PORT} is already in use`);
+          if (err.code === 'EADDRINUSE') {    console.log('Looking for an available port...');
+            server.close();(PORT + 1);
+            resolve(false);le port: ${serverPort}`);
           } else {
             reject(err);
           }
@@ -1294,31 +1312,39 @@ const startServer = async () => {
         
         server.listen(PORT, () => {
           server.close();
-          resolve(true);
-        });
-      });
-    } catch (err) {
-      if (err.code === 'EADDRINUSE') {
-        console.log(`⚠️ Port ${PORT} is already in use`);
-        console.log('Looking for an available port...');
-        serverPort = await findAvailablePort(PORT + 1);
-        console.log(`Found available port: ${serverPort}`);
-      } else {
-        throw err;
-      }
-    }
-    
-    app.listen(serverPort, () => {
-      console.log(`\n✅ Server running on http://localhost:${serverPort}`);
-      console.log(`Database status: ${dbConnected ? 'Connected' : fileStorageEnabled ? 'File storage enabled' : 'Not connected (using in-memory storage)'}`);
-    });
-  } catch (error) {
-    console.error('Error starting server:', error.message);
-    console.log('To kill the process using port 3001, use one of these commands:');
-    console.log('  lsof -i :3001 | grep LISTEN | awk \'{print $2}\' | xargs kill -9');
-    console.log('  OR use a different port: PORT=3002 npm start');
-    process.exit(1);
-  }
+          resolve(true);Port}`);
+        });atabase status: ${dbConnected ? 'Connected' : fileStorageEnabled ? 'File storage enabled' : 'Not connected (using in-memory storage)'}`);
+      }); });
+    } catch (err) {} catch (error) {
+      if (err.code === 'EADDRINUSE') {    console.error('Error starting server:', error.message);
+        console.log(`⚠️ Port ${PORT} is already in use`); kill the process using port 3001, use one of these commands:');
+        console.log('Looking for an available port...');| grep LISTEN | awk \'{print $2}\' | xargs kill -9');
+        serverPort = await findAvailablePort(PORT + 1);'  OR use a different port: PORT=3002 npm start');
+        console.log(`Found available port: ${serverPort}`); process.exit(1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+});  startServer();initializeDatabase().then(() => {// Start the server};  }    process.exit(1);    console.log('  OR use a different port: PORT=3002 npm start');    console.log('  lsof -i :3001 | grep LISTEN | awk \'{print $2}\' | xargs kill -9');    console.log('To kill the process using port 3001, use one of these commands:');    console.error('Error starting server:', error.message);  } catch (error) {    });      console.log(`Database status: ${dbConnected ? 'Connected' : fileStorageEnabled ? 'File storage enabled' : 'Not connected (using in-memory storage)'}`);      console.log(`\n✅ Server running on http://localhost:${serverPort}`);    app.listen(serverPort, () => {    // Start the server on the selected port        }      }        throw err;      } else {  }
 };
 
 // Start the server
