@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # Simplified Version
+  form-builder-simple:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - ./volumes/simple-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - form-builder-network
+    profiles:
+      - simple
+
+  # Enhanced Version
+  form-builder-enhanced:
+    build:
+      context: .
+      dockerfile: Dockerfile.enhanced
+    ports:
+      - "3002:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DB_HOST=mysql
+      - DB_USER=form_user
+      - DB_PASSWORD=secure_password_123
+      - DB_NAME=marketing_campaign_advanced
+      - JWT_SECRET=super-secure-jwt-secret-for-production-change-this
+      - SESSION_SECRET=super-secure-session-secret-for-production
+      - SKIP_DATABASE=false
+    volumes:
+      - ./volumes/enhanced-uploads:/app/uploads
+      - ./volumes/enhanced-logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - form-builder-network
+    profiles:
+      - enhanced
+
+  # MySQL Database for Enhanced Version
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password_123
+      - MYSQL_DATABASE=marketing_campaign_advanced
+      - MYSQL_USER=form_user
+      - MYSQL_PASSWORD=secure_password_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./volumes/mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - form-builder-network
+    profiles:
+      - enhanced
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  form-builder-network:
+    driver: bridge 

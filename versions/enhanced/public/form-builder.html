@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Campaign Form Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .form-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-info input, .form-info textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-info input[name="title"] {
+            flex: 1;
+        }
+        
+        .form-info textarea {
+            flex: 2;
+            height: 60px;
+            resize: vertical;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .field-type {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: center;
+            cursor: grab;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .field-type:hover {
+            background: #e9ecef;
+            border-color: #3b82f6;
+        }
+        
+        .field-type.dragging {
+            opacity: 0.5;
+        }
+        
+        .form-canvas {
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+        
+        .drop-zone {
+            min-height: 200px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+        
+        .form-field {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .form-field:hover {
+            border-color: #3b82f6;
+        }
+        
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .field-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .field-controls button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .field-preview {
+            margin-top: 10px;
+        }
+        
+        .field-preview label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .field-preview input, .field-preview select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .url-display {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .url-display h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .url-link {
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .copy-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .forms-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .form-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .form-item h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .form-item p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .link-button {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Marketing Campaign Form Builder</h1>
+            <p>Create powerful forms with drag-and-drop functionality and get shareable links instantly!</p>
+            
+            <div class="form-info">
+                <input type="text" name="title" placeholder="Enter form title..." value="My New Form">
+                <textarea name="description" placeholder="Form description (optional)">Help us improve our services by filling out this form.</textarea>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-primary" onclick="saveForm()">💾 Save Form</button>
+                <button class="btn btn-secondary" onclick="previewForm()">👀 Preview</button>
+                <button class="btn btn-secondary" onclick="clearForm()">🗑️ Clear All</button>
+                <button class="btn btn-secondary" onclick="loadForms()">📋 View All Forms</button>
+            </div>
+            
+            <div id="successMessage" class="success-message"></div>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="urlDisplay" class="url-display"></div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>📝 Field Types</h3>
+                <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Drag fields to the form area or click to add</p>
+                
+                <div class="field-type" draggable="true" data-type="text" onclick="addField('text')">
+                    📝 Text Input
+                </div>
+                
+                <div class="field-type" draggable="true" data-type="dropdown" onclick="addField('dropdown')">
+                    ▼ Dropdown
+                </div>
+                
+                <div class="field-type" draggable="true" data-type="file" onclick="addField('file')">
+                    📎 File Upload
+                </div>
+            </div>
+            
+            <div class="form-canvas">
+                <h3>Form Builder</h3>
+                <div id="formFields" class="drop-zone">
+                    <p>Drag field types here or click them to add to your form</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="formsList" class="forms-list" style="display: none;">
+            <h3>📋 Your Forms</h3>
+            <div id="formsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let formFields = [];
+        let fieldCounter = 0;
+        
+        // Drag and drop functionality
+        document.querySelectorAll('.field-type').forEach(fieldType => {
+            fieldType.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', e.target.dataset.type);
+                e.target.classList.add('dragging');
+            });
+            
+            fieldType.addEventListener('dragend', (e) => {
+                e.target.classList.remove('dragging');
+            });
+        });
+        
+        const dropZone = document.getElementById('formFields');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const fieldType = e.dataTransfer.getData('text/plain');
+            addField(fieldType);
+        });
+        
+        function addField(type) {
+            fieldCounter++;
+            const fieldId = `field_${fieldCounter}`;
+            
+            const field = {
+                id: fieldId,
+                type: type,
+                question: `${type.charAt(0).toUpperCase() + type.slice(1)} Question ${fieldCounter}`,
+                isRequired: true,
+                options: type === 'dropdown' ? [
+                    { value: 'option1', label: 'Option 1' },
+                    { value: 'option2', label: 'Option 2' }
+                ] : undefined
+            };
+            
+            formFields.push(field);
+            renderFormFields();
+        }
+        
+        function removeField(fieldId) {
+            formFields = formFields.filter(field => field.id !== fieldId);
+            renderFormFields();
+        }
+        
+        function renderFormFields() {
+            const container = document.getElementById('formFields');
+            
+            if (formFields.length === 0) {
+                container.innerHTML = '<p>Drag field types here or click them to add to your form</p>';
+                container.className = 'drop-zone';
+                return;
+            }
+            
+            container.className = '';
+            container.innerHTML = formFields.map(field => {
+                let fieldPreview = '';
+                
+                if (field.type === 'text') {
+                    fieldPreview = `
+                        <div class="field-preview">
+                            <label>${field.question} ${field.isRequired ? '*' : ''}</label>
+                            <input type="text" placeholder="Enter your answer...">
+                        </div>
+                    `;
+                } else if (field.type === 'dropdown') {
+                    const options = field.options ? field.options.map(opt => 
+                        `<option value="${opt.value}">${opt.label}</option>`
+                    ).join('') : '';
+                    fieldPreview = `
+                        <div class="field-preview">
+                            <label>${field.question} ${field.isRequired ? '*' : ''}</label>
+                            <select>
+                                <option value="">Select an option...</option>
+                                ${options}
+                            </select>
+                        </div>
+                    `;
+                } else if (field.type === 'file') {
+                    fieldPreview = `
+                        <div class="field-preview">
+                            <label>${field.question} ${field.isRequired ? '*' : ''}</label>
+                            <input type="file">
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="form-field">
+                        <div class="field-header">
+                            <span>📝 ${field.type.charAt(0).toUpperCase() + field.type.slice(1)} Field</span>
+                            <div class="field-controls">
+                                <button onclick="removeField('${field.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        ${fieldPreview}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function saveForm() {
+            const title = document.querySelector('input[name="title"]').value.trim();
+            const description = document.querySelector('textarea[name="description"]').value.trim();
+            
+            if (!title) {
+                showError('Please enter a form title');
+                return;
+            }
+            
+            if (formFields.length === 0) {
+                showError('Please add at least one field to your form');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/forms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        fields: formFields
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess(`Form "${title}" created successfully!`);
+                    showFormUrl(result.shareUrl, result.formId);
+                } else {
+                    showError(result.error || 'Failed to create form');
+                }
+            } catch (error) {
+                showError('Error creating form: ' + error.message);
+            }
+        }
+        
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            const errorEl = document.getElementById('errorMessage');
+            
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            
+            setTimeout(() => {
+                successEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            const successEl = document.getElementById('successMessage');
+            
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            successEl.style.display = 'none';
+            
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showFormUrl(shareUrl, formId) {
+            const urlDisplay = document.getElementById('urlDisplay');
+            urlDisplay.innerHTML = `
+                <h4>🎉 Your form is ready! Share this link:</h4>
+                <div class="url-link">
+                    <span id="formUrl">${shareUrl}</span>
+                    <button class="copy-btn" onclick="copyToClipboard('${shareUrl}')">📋 Copy</button>
+                </div>
+                <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                    <a href="${shareUrl}" target="_blank" class="link-button">🔗 Open Form</a>
+                    <span style="margin-left: 10px;">Form ID: ${formId}</span>
+                </p>
+            `;
+            urlDisplay.style.display = 'block';
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('Link copied to clipboard!');
+            }).catch(() => {
+                showError('Failed to copy link');
+            });
+        }
+        
+        function previewForm() {
+            if (formFields.length === 0) {
+                showError('Please add some fields before previewing');
+                return;
+            }
+            
+            const title = document.querySelector('input[name="title"]').value.trim() || 'Form Preview';
+            const description = document.querySelector('textarea[name="description"]').value.trim();
+            
+            const fieldsHtml = formFields.map(field => {
+                if (field.type === 'dropdown') {
+                    const options = field.options ? field.options.map(opt => 
+                        `<option value="${opt.value}">${opt.label}</option>`
+                    ).join('') : '';
+                    return `
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                ${field.question} ${field.isRequired ? '*' : ''}
+                            </label>
+                            <select style="width: 100%; padding: 8px;">
+                                <option value="">Select an option...</option>
+                                ${options}
+                            </select>
+                        </div>
+                    `;
+                } else if (field.type === 'file') {
+                    return `
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">
+                                ${field.question} ${field.isRequired ? '*' : ''}
+                            </label>
+                            <input type="file" style="width: 100%; padding: 8px;">
+                        </div>
+                    `;
+                }
+                return `
+                    <div style="margin: 15px 0;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">
+                            ${field.question} ${field.isRequired ? '*' : ''}
+                        </label>
+                        <input type="text" style="width: 100%; padding: 8px; border: 1px solid #ddd;">
+                    </div>
+                `;
+            }).join('');
+            
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${title} - Preview</title>
+                    <style>
+                        body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }
+                        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        button { background: #3b82f6; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>${title}</h1>
+                        ${description ? `<p>${description}</p>` : ''}
+                        <form>
+                            ${fieldsHtml}
+                            <button type="submit" style="margin-top: 20px;">Submit (Preview Only)</button>
+                        </form>
+                        <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 4px; color: #856404;">
+                            📝 This is a preview. Save your form to get a working link.
+                        </p>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+        
+        function clearForm() {
+            if (confirm('Are you sure you want to clear all fields?')) {
+                formFields = [];
+                fieldCounter = 0;
+                renderFormFields();
+                document.querySelector('input[name="title"]').value = 'My New Form';
+                document.querySelector('textarea[name="description"]').value = 'Help us improve our services by filling out this form.';
+                document.getElementById('urlDisplay').style.display = 'none';
+            }
+        }
+        
+        async function loadForms() {
+            try {
+                const response = await fetch('/api/forms');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayForms(result.forms);
+                } else {
+                    showError('Failed to load forms');
+                }
+            } catch (error) {
+                showError('Error loading forms: ' + error.message);
+            }
+        }
+        
+        function displayForms(forms) {
+            const formsList = document.getElementById('formsList');
+            const container = document.getElementById('formsContainer');
+            
+            if (forms.length === 0) {
+                container.innerHTML = '<p>No forms created yet. Create your first form above!</p>';
+            } else {
+                container.innerHTML = forms.map(form => `
+                    <div class="form-item">
+                        <div>
+                            <h4>${form.title}</h4>
+                            <p>${form.description || 'No description'}</p>
+                            <small>Created: ${new Date(form.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <div class="form-actions">
+                            <a href="${form.shareUrl}" target="_blank" class="link-button">🔗 Open</a>
+                            <button class="copy-btn" onclick="copyToClipboard('${form.shareUrl}')">📋 Copy Link</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            formsList.style.display = 'block';
+        }
+        
+        // Initialize
+        renderFormFields();
+    </script>
+</body>
+</html> 

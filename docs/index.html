@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Campaign Form Builder - API Documentation & User Manual</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1d4ed8;
+            --accent-color: #3b82f6;
+            --text-color: #1e293b;
+            --text-light: #64748b;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--background);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--surface);
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 2rem 0;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .section h3 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+            color: var(--text-color);
+        }
+
+        .section h4 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem 0;
+            color: var(--text-color);
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #2d3748;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            color: #e2e8f0;
+            font-family: 'Fira Code', Monaco, 'Cascadia Code', monospace;
+        }
+
+        /* API Endpoint */
+        .endpoint {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            background: var(--surface);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.875rem;
+            margin-right: 1rem;
+        }
+
+        .method-get { background: var(--success); color: white; }
+        .method-post { background: var(--primary-color); color: white; }
+        .method-put { background: var(--warning); color: white; }
+        .method-delete { background: var(--error); color: white; }
+
+        .endpoint-url {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .endpoint-body {
+            padding: 1rem;
+        }
+
+        /* Quick Start */
+        .quick-start {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .quick-start h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Interactive Elements */
+        .try-it-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            margin: 0.5rem 0;
+        }
+
+        .try-it-button:hover {
+            background: var(--primary-color);
+        }
+
+        .response-preview {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        /* Version Tabs */
+        .version-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .version-tab {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .version-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .version-content {
+            display: none;
+        }
+
+        .version-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1><i class="fas fa-form"></i> Marketing Campaign Form Builder</h1>
+            <p>API Documentation & User Manual</p>
+        </div>
+    </header>
+
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#overview" class="nav-link active" onclick="showSection('overview')">Overview</a>
+            <a href="#quick-start" class="nav-link" onclick="showSection('quick-start')">Quick Start</a>
+            <a href="#api-reference" class="nav-link" onclick="showSection('api-reference')">API Reference</a>
+            <a href="#form-builder" class="nav-link" onclick="showSection('form-builder')">Form Builder Guide</a>
+            <a href="#themes" class="nav-link" onclick="showSection('themes')">Themes & Styling</a>
+            <a href="#authentication" class="nav-link" onclick="showSection('authentication')">Authentication</a>
+            <a href="#examples" class="nav-link" onclick="showSection('examples')">Examples</a>
+            <a href="#troubleshooting" class="nav-link" onclick="showSection('troubleshooting')">Troubleshooting</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            <!-- Overview Section -->
+            <section id="overview" class="section active">
+                <h2><i class="fas fa-info-circle"></i> Overview</h2>
+                
+                <div class="quick-start">
+                    <h3>🚀 Get Started in 2 Minutes</h3>
+                    <p>Create beautiful, functional forms with automatic link generation. No complex setup required!</p>
+                    <div class="code-block">
+                        <code>npm install express cors
+node simple-server.js
+# Open http://localhost:3001/form-builder.html</code>
+                    </div>
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-link"></i></div>
+                        <h3>Automatic Link Generation</h3>
+                        <p>Every form gets an instant shareable URL: <code>http://localhost:3001/form/[ID]</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-mouse-pointer"></i></div>
+                        <h3>Drag & Drop Builder</h3>
+                        <p>Intuitive visual form designer with real-time preview</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-mobile-alt"></i></div>
+                        <h3>Responsive Design</h3>
+                        <p>Forms work perfectly on desktop, tablet, and mobile devices</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-palette"></i></div>
+                        <h3>Professional Themes</h3>
+                        <p>5 built-in themes plus custom theme support (Enhanced version)</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h3>Secure Authentication</h3>
+                        <p>JWT-based authentication with role management (Enhanced version)</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-database"></i></div>
+                        <h3>Database Integration</h3>
+                        <p>MySQL support with automatic fallback to in-memory storage</p>
+                    </div>
+                </div>
+
+                <div class="version-tabs">
+                    <button class="version-tab active" onclick="showVersionContent('simple')">Simplified Version</button>
+                    <button class="version-tab" onclick="showVersionContent('enhanced')">Enhanced Version</button>
+                </div>
+
+                <div id="simple-content" class="version-content active">
+                    <div class="card">
+                        <h3>📦 Simplified Version</h3>
+                        <p><strong>Perfect for:</strong> Quick prototypes, small teams, internal tools</p>
+                        <ul>
+                            <li>✅ 2-minute setup</li>
+                            <li>✅ Only 2 dependencies (express, cors)</li>
+                            <li>✅ Automatic link generation</li>
+                            <li>✅ In-memory storage (no database required)</li>
+                            <li>✅ Drag & drop form builder</li>
+                            <li>✅ Form preview and submission</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="enhanced-content" class="version-content">
+                    <div class="card">
+                        <h3>🚀 Enhanced Version</h3>
+                        <p><strong>Perfect for:</strong> Enterprise applications, production environments, complex surveys</p>
+                        <ul>
+                            <li>✅ All simplified features PLUS:</li>
+                            <li>✅ JWT authentication & user management</li>
+                            <li>✅ 5 professional themes + custom themes</li>
+                            <li>✅ Conditional logic & smart form flows</li>
+                            <li>✅ MySQL database integration</li>
+                            <li>✅ Form analytics and tracking</li>
+                            <li>✅ File upload support</li>
+                            <li>✅ Admin dashboard</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Start Section -->
+            <section id="quick-start" class="section">
+                <h2><i class="fas fa-rocket"></i> Quick Start Guide</h2>
+
+                <div class="card">
+                    <h3>🎯 Choose Your Installation Method</h3>
+                    
+                    <h4>Option 1: Direct Installation (Recommended)</h4>
+                    <div class="code-block">
+                        <code># For Simplified Version (2 minutes)
+cd versions/simple
+npm install
+npm start
+# Open http://localhost:3001/form-builder.html
+
+# For Enhanced Version (10 minutes)
+cd versions/enhanced
+npm install
+npm start
+# Login: admin/admin123</code>
+                    </div>
+
+                    <h4>Option 2: Virtual Environment (Isolated)</h4>
+                    <div class="code-block">
+                        <code># Setup virtual environment
+npm run venv:setup
+
+# Run in virtual environment
+npm run venv:simple     # Simplified version
+npm run venv:enhanced   # Enhanced version</code>
+                    </div>
+
+                    <h4>Option 3: Docker (Production Ready)</h4>
+                    <div class="code-block">
+                        <code># Docker containers
+npm run docker:simple     # Simplified in Docker
+npm run docker:enhanced   # Enhanced + MySQL in Docker</code>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📋 First Steps After Installation</h3>
+                    <ol>
+                        <li><strong>Access Form Builder:</strong> Open <code>http://localhost:3001/form-builder.html</code></li>
+                        <li><strong>Create Your First Form:</strong> Use the drag-and-drop interface</li>
+                        <li><strong>Save & Get Link:</strong> Your form gets an automatic shareable URL</li>
+                        <li><strong>Share:</strong> Send the link to your audience</li>
+                        <li><strong>Collect Responses:</strong> View submissions in real-time</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- API Reference Section -->
+            <section id="api-reference" class="section">
+                <h2><i class="fas fa-code"></i> API Reference</h2>
+
+                <h3>Core Endpoints (Both Versions)</h3>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-url">/api/health</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> Check server health status</p>
+                        <p><strong>Response:</strong></p>
+                        <div class="code-block">
+                            <code>{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "version": "2.0.0"
+}</code>
+                        </div>
+                        <button class="try-it-button" onclick="tryEndpoint('/api/health', 'GET')">Try It</button>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-url">/api/forms</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> Get all forms</p>
+                        <p><strong>Response:</strong></p>
+                        <div class="code-block">
+                            <code>{
+  "success": true,
+  "forms": [
+    {
+      "id": "1",
+      "title": "Contact Form",
+      "description": "Get in touch with us",
+      "shareUrl": "http://localhost:3001/form/1",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}</code>
+                        </div>
+                        <button class="try-it-button" onclick="tryEndpoint('/api/forms', 'GET')">Try It</button>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-url">/api/forms</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> Create a new form (returns automatic shareUrl)</p>
+                        <p><strong>Request Body:</strong></p>
+                        <div class="code-block">
+                            <code>{
+  "title": "Survey Form",
+  "description": "Customer feedback survey",
+  "fields": [
+    {
+      "id": "name",
+      "type": "text",
+      "question": "Your Name",
+      "isRequired": true
+    },
+    {
+      "id": "email",
+      "type": "text",
+      "question": "Email Address",
+      "isRequired": true
+    }
+  ]
+}</code>
+                        </div>
+                        <p><strong>Response:</strong></p>
+                        <div class="code-block">
+                            <code>{
+  "success": true,
+  "formId": "2",
+  "shareUrl": "http://localhost:3001/form/2"
+}</code>
+                        </div>
+                        <button class="try-it-button" onclick="tryCreateForm()">Try It</button>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-url">/api/forms/:id</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> Get specific form details</p>
+                        <p><strong>URL Parameters:</strong></p>
+                        <ul>
+                            <li><code>id</code> - Form ID</li>
+                        </ul>
+                        <button class="try-it-button" onclick="tryEndpoint('/api/forms/1', 'GET')">Try It</button>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-url">/api/forms/:id/submit</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> Submit form data</p>
+                        <p><strong>Request Body:</strong></p>
+                        <div class="code-block">
+                            <code>{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "message": "Great form builder!"
+}</code>
+                        </div>
+                        <button class="try-it-button" onclick="trySubmitForm()">Try It</button>
+                    </div>
+                </div>
+
+                <h3>Enhanced Version Endpoints</h3>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-post">POST</span>
+                        <span class="endpoint-url">/api/auth/login</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> User authentication</p>
+                        <p><strong>Request Body:</strong></p>
+                        <div class="code-block">
+                            <code>{
+  "username": "admin",
+  "password": "admin123"
+}</code>
+                        </div>
+                        <button class="try-it-button" onclick="tryLogin()">Try It</button>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method method-get">GET</span>
+                        <span class="endpoint-url">/api/themes</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p><strong>Description:</strong> Get available themes</p>
+                        <button class="try-it-button" onclick="tryEndpoint('/api/themes', 'GET')">Try It</button>
+                    </div>
+                </div>
+
+                <div id="response-area" class="response-preview" style="display: none;"></div>
+            </section>
+
+            <!-- Form Builder Guide Section -->
+            <section id="form-builder" class="section">
+                <h2><i class="fas fa-tools"></i> Form Builder Guide</h2>
+
+                <div class="card">
+                    <h3>🎨 Building Your First Form</h3>
+                    <ol>
+                        <li><strong>Access the Builder:</strong> Go to <code>http://localhost:3001/form-builder.html</code></li>
+                        <li><strong>Set Form Details:</strong> Enter title and description</li>
+                        <li><strong>Add Fields:</strong> Drag field types from the left panel</li>
+                        <li><strong>Configure Fields:</strong> Click on fields to set properties</li>
+                        <li><strong>Preview:</strong> Test your form before saving</li>
+                        <li><strong>Save & Share:</strong> Get your automatic shareable link</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h3>📝 Available Field Types</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-keyboard"></i></div>
+                            <h4>Text Input</h4>
+                            <p>Single-line text entry fields</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-list"></i></div>
+                            <h4>Dropdown</h4>
+                            <p>Select from predefined options</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-upload"></i></div>
+                            <h4>File Upload</h4>
+                            <p>Allow users to upload files</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon"><i class="fas fa-check-square"></i></div>
+                            <h4>Checkbox</h4>
+                            <p>Multiple selection options</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚡ Advanced Features (Enhanced Version)</h3>
+                    
+                    <h4>Conditional Logic</h4>
+                    <p>Show or hide fields based on user responses:</p>
+                    <div class="code-block">
+                        <code>{
+  "id": "customer_type",
+  "type": "dropdown",
+  "conditions": [
+    {
+      "optionValue": "new",
+      "action": "show",
+      "targetId": "how_did_you_hear"
+    }
+  ]
+}</code>
+                    </div>
+
+                    <h4>Form Validation</h4>
+                    <p>Add validation rules to ensure data quality:</p>
+                    <div class="code-block">
+                        <code>{
+  "id": "email",
+  "type": "text",
+  "validation": {
+    "required": true,
+    "pattern": "email",
+    "errorMessage": "Please enter a valid email"
+  }
+}</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Themes Section -->
+            <section id="themes" class="section">
+                <h2><i class="fas fa-palette"></i> Themes & Styling</h2>
+
+                <div class="card">
+                    <h3>🎨 Built-in Themes (Enhanced Version)</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card" style="border-left: 4px solid #2563eb;">
+                            <h4>Professional Blue</h4>
+                            <p>Clean, corporate styling perfect for business forms</p>
+                            <div class="code-block">
+                                <code>Primary: #2563eb
+Secondary: #1d4ed8</code>
+                            </div>
+                        </div>
+                        <div class="feature-card" style="border-left: 4px solid #059669;">
+                            <h4>Modern Green</h4>
+                            <p>Fresh, contemporary look for eco-friendly brands</p>
+                            <div class="code-block">
+                                <code>Primary: #059669
+Secondary: #047857</code>
+                            </div>
+                        </div>
+                        <div class="feature-card" style="border-left: 4px solid #7c3aed;">
+                            <h4>Elegant Purple</h4>
+                            <p>Sophisticated design for premium experiences</p>
+                            <div class="code-block">
+                                <code>Primary: #7c3aed
+Secondary: #5b21b6</code>
+                            </div>
+                        </div>
+                        <div class="feature-card" style="border-left: 4px solid #ea580c;">
+                            <h4>Warm Orange</h4>
+                            <p>Friendly, approachable feel for community forms</p>
+                            <div class="code-block">
+                                <code>Primary: #ea580c
+Secondary: #c2410c</code>
+                            </div>
+                        </div>
+                        <div class="feature-card" style="border-left: 4px solid #3b82f6; background: #1e293b; color: white;">
+                            <h4>Dark Mode</h4>
+                            <p>Easy on the eyes for extended use</p>
+                            <div class="code-block">
+                                <code>Primary: #3b82f6
+Background: #0f172a</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🛠️ Custom Theme Creation</h3>
+                    <p>Create your own theme by defining color palette:</p>
+                    <div class="code-block">
+                        <code>{
+  "theme": {
+    "id": "custom",
+    "name": "My Brand Theme",
+    "primaryColor": "#ff6b6b",
+    "secondaryColor": "#ee5a52",
+    "backgroundColor": "#ffffff",
+    "cardBackground": "#f8f9fa",
+    "textColor": "#2c3e50"
+  }
+}</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Authentication Section -->
+            <section id="authentication" class="section">
+                <h2><i class="fas fa-shield-alt"></i> Authentication</h2>
+
+                <div class="card">
+                    <h3>🔐 Enhanced Version Authentication</h3>
+                    
+                    <h4>Default Credentials</h4>
+                    <div class="code-block">
+                        <code>Username: admin
+Password: admin123</code>
+                    </div>
+
+                    <h4>Login Process</h4>
+                    <ol>
+                        <li>Send POST request to <code>/api/auth/login</code></li>
+                        <li>Receive JWT token in response</li>
+                        <li>Include token in subsequent requests</li>
+                    </ol>
+
+                    <h4>Protected Endpoints</h4>
+                    <p>Include JWT token in Authorization header:</p>
+                    <div class="code-block">
+                        <code>Authorization: Bearer YOUR_JWT_TOKEN</code>
+                    </div>
+
+                    <h4>User Management</h4>
+                    <p>Create new users via API:</p>
+                    <div class="code-block">
+                        <code>POST /api/auth/register
+{
+  "username": "newuser",
+  "email": "user@example.com",
+  "password": "secure123",
+  "role": "user"
+}</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Examples Section -->
+            <section id="examples" class="section">
+                <h2><i class="fas fa-code"></i> Examples</h2>
+
+                <div class="card">
+                    <h3>📋 Contact Form Example</h3>
+                    <div class="code-block">
+                        <code>POST /api/forms
+{
+  "title": "Contact Us",
+  "description": "Get in touch with our team",
+  "fields": [
+    {
+      "id": "name",
+      "type": "text",
+      "question": "Your Name",
+      "isRequired": true
+    },
+    {
+      "id": "email",
+      "type": "text",
+      "question": "Email Address",
+      "isRequired": true,
+      "validation": {
+        "pattern": "email"
+      }
+    },
+    {
+      "id": "subject",
+      "type": "dropdown",
+      "question": "Subject",
+      "options": [
+        {"value": "support", "label": "Support"},
+        {"value": "sales", "label": "Sales"},
+        {"value": "general", "label": "General Inquiry"}
+      ]
+    },
+    {
+      "id": "message",
+      "type": "textarea",
+      "question": "Message",
+      "isRequired": true
+    }
+  ]
+}</code>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Survey Form with Conditional Logic</h3>
+                    <div class="code-block">
+                        <code>POST /api/forms
+{
+  "title": "Customer Satisfaction Survey",
+  "fields": [
+    {
+      "id": "satisfaction",
+      "type": "dropdown",
+      "question": "How satisfied are you with our service?",
+      "options": [
+        {"value": "very_satisfied", "label": "Very Satisfied"},
+        {"value": "satisfied", "label": "Satisfied"},
+        {"value": "neutral", "label": "Neutral"},
+        {"value": "dissatisfied", "label": "Dissatisfied"}
+      ],
+      "conditions": [
+        {
+          "optionValue": "dissatisfied",
+          "action": "show",
+          "targetId": "improvement_suggestions"
+        }
+      ]
+    },
+    {
+      "id": "improvement_suggestions",
+      "type": "textarea",
+      "question": "How can we improve?",
+      "isConditional": true
+    }
+  ]
+}</code>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🌐 JavaScript Integration</h3>
+                    <div class="code-block">
+                        <code>// Create a form
+const createForm = async () => {
+  const response = await fetch('/api/forms', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: 'My Form',
+      fields: [...]
+    })
+  });
+  
+  const result = await response.json();
+  console.log('Form created:', result.shareUrl);
+};
+
+// Submit form data
+const submitForm = async (formId, data) => {
+  const response = await fetch(`/api/forms/${formId}/submit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+  
+  const result = await response.json();
+  console.log('Submission result:', result);
+};</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Troubleshooting Section -->
+            <section id="troubleshooting" class="section">
+                <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+
+                <div class="card">
+                    <h3>🔧 Common Issues</h3>
+                    
+                    <h4>Port Already in Use</h4>
+                    <div class="code-block">
+                        <code># Find process using port 3001
+lsof -i :3001
+
+# Kill the process
+kill -9 [PID]
+
+# Or use different port
+PORT=3002 npm start</code>
+                    </div>
+
+                    <h4>Forms Not Saving</h4>
+                    <ul>
+                        <li>Check server console for errors</li>
+                        <li>Verify API endpoints with browser dev tools</li>
+                        <li>Check network connectivity</li>
+                        <li>Ensure form data is valid JSON</li>
+                    </ul>
+
+                    <h4>Database Connection (Enhanced Version)</h4>
+                    <div class="code-block">
+                        <code># Check MySQL is running
+brew services list | grep mysql
+
+# Restart MySQL
+brew services restart mysql
+
+# Use in-memory fallback
+SKIP_DATABASE=true npm start</code>
+                    </div>
+
+                    <h4>Authentication Issues</h4>
+                    <ul>
+                        <li>Verify JWT token is included in requests</li>
+                        <li>Check token expiration</li>
+                        <li>Ensure correct credentials for login</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📞 Support</h3>
+                    <p>If you're still experiencing issues:</p>
+                    <ul>
+                        <li>Check the console logs for detailed error messages</li>
+                        <li>Verify your Node.js version (18.20.0 or higher recommended)</li>
+                        <li>Try the virtual environment setup for isolation</li>
+                        <li>Use Docker for production deployments</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+            
+            const activeLink = document.querySelector(`[href="#${sectionId}"]`);
+            if (activeLink) activeLink.classList.add('active');
+        }
+
+        // Version tabs
+        function showVersionContent(version) {
+            // Hide all version content
+            const contents = document.querySelectorAll('.version-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Show selected version
+            document.getElementById(`${version}-content`).classList.add('active');
+            
+            // Update tabs
+            const tabs = document.querySelectorAll('.version-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            event.target.classList.add('active');
+        }
+
+        // API Testing
+        function showResponse(data) {
+            const responseArea = document.getElementById('response-area');
+            responseArea.style.display = 'block';
+            responseArea.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function tryEndpoint(endpoint, method) {
+            const baseUrl = window.location.origin.replace(':3000', ':3001'); // Adjust for API port
+            
+            fetch(baseUrl + endpoint, { method })
+                .then(response => response.json())
+                .then(data => showResponse(data))
+                .catch(error => showResponse({ error: error.message }));
+        }
+
+        function tryCreateForm() {
+            const baseUrl = window.location.origin.replace(':3000', ':3001');
+            const formData = {
+                title: "Test Form",
+                description: "API Documentation Test",
+                fields: [
+                    {
+                        id: "name",
+                        type: "text",
+                        question: "Your Name",
+                        isRequired: true
+                    }
+                ]
+            };
+
+            fetch(baseUrl + '/api/forms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => showResponse(data))
+            .catch(error => showResponse({ error: error.message }));
+        }
+
+        function trySubmitForm() {
+            const baseUrl = window.location.origin.replace(':3000', ':3001');
+            const submissionData = {
+                name: "John Doe",
+                email: "john@example.com"
+            };
+
+            fetch(baseUrl + '/api/forms/1/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(submissionData)
+            })
+            .then(response => response.json())
+            .then(data => showResponse(data))
+            .catch(error => showResponse({ error: error.message }));
+        }
+
+        function tryLogin() {
+            const baseUrl = window.location.origin.replace(':3000', ':3001');
+            const loginData = {
+                username: "admin",
+                password: "admin123"
+            };
+
+            fetch(baseUrl + '/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loginData)
+            })
+            .then(response => response.json())
+            .then(data => showResponse(data))
+            .catch(error => showResponse({ error: error.message }));
+        }
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = e.target.getAttribute('href').substring(1);
+                showSection(targetId);
+            });
+        });
+    </script>
+</body>
+</html> 

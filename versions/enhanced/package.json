@@ -1,0 +1,40 @@
+{
+  "name": "marketing-campaign-enhanced",
+  "version": "2.0.0",
+  "description": "Marketing Campaign Form Builder - Enhanced Version with Authentication, Themes, and Database",
+  "main": "enhanced-server.js",
+  "scripts": {
+    "start": "node enhanced-server.js",
+    "dev": "node enhanced-server.js",
+    "init-db": "node init-enhanced-db.js",
+    "docs": "echo 'API Documentation: http://localhost:3003' && echo 'Enhanced Form Builder: http://localhost:3001/form-builder.html' && echo 'Login: admin/admin123'"
+  },
+  "keywords": [
+    "form-builder",
+    "marketing",
+    "survey",
+    "enhanced",
+    "authentication",
+    "themes",
+    "database",
+    "conditional-logic"
+  ],
+  "author": "Marketing Campaign Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.20.0"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "mysql2": "^3.2.0",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "express-session": "^1.17.3",
+    "dotenv": "^16.0.3",
+    "multer": "^1.4.5",
+    "helmet": "^6.0.1",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^6.15.0"
+  }
+} 

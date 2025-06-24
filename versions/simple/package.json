@@ -1,0 +1,27 @@
+{
+  "name": "marketing-campaign-simple",
+  "version": "2.0.0",
+  "description": "Marketing Campaign Form Builder - Simplified Version",
+  "main": "simple-server.js",
+  "scripts": {
+    "start": "node simple-server.js",
+    "dev": "node simple-server.js",
+    "docs": "echo 'API Documentation: http://localhost:3003' && echo 'Form Builder: http://localhost:3001/form-builder.html'"
+  },
+  "keywords": [
+    "form-builder",
+    "marketing",
+    "survey",
+    "simple",
+    "drag-drop"
+  ],
+  "author": "Marketing Campaign Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.20.0"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  }
+} 
